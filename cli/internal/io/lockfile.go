@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alikznollet/godot-addon-updater/types"
+	"github.com/alikznollet/godot-addon-updater/internal/types"
 )
 
 // Saves an AddonManifest object to addons.json.

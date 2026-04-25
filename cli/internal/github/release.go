@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/alikznollet/godot-addon-updater/types"
+	"github.com/alikznollet/godot-addon-updater/internal/types"
 )
 
 func getLatestRelease(owner string, repo string) (*types.GitHubRelease, error) {

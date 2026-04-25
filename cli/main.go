@@ -105,7 +105,7 @@ var cli struct {
 func main() {
 	ctx := kong.Parse(
 		&cli,
-		kong.Name("godot-addon-updater"),
+		kong.Name("gau"),
 		kong.Description("A CLI tool to manage Godot addons from GitHub."),
 		kong.UsageOnError(),
 	)

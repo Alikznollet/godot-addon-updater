@@ -1,9 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/alecthomas/kong"
+	"github.com/alikznollet/godot-addon-updater/internal/manifest"
 	"github.com/alikznollet/godot-addon-updater/internal/util"
 )
 
@@ -22,6 +25,25 @@ func (cmd *InitCmd) Run() error {
 
 	fmt.Println("Initializing addons.json...")
 	fmt.Printf("Force Overwrite: %v\n", cmd.Force)
+
+	if _, err := os.Stat("addons.json"); err == nil {
+		if !cmd.Force {
+			return errors.New("addons.json already exists. Use --force to overwrite.")
+		}
+		fmt.Println("Overwriting existing addons.json...")
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	// Create and save an empty manifest.
+	m := manifest.AddonManifest{
+		Addons: make(map[string]manifest.Addon),
+	}
+	err := manifest.SaveManifest(m)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

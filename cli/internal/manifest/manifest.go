@@ -1,10 +1,21 @@
 package manifest
 
+// Enum used as type of Addon.
+type AddonType int
+
+const (
+	Release AddonType = iota
+	Branch
+)
+
 // A single addon struct with JSON support.
 // This struct is written to addons.json.
 type Addon struct {
-	Version   string `json:"version"`
-	Untracked bool   `json:"untracked,omitempty"`
+	Repo      string    `json:"repo"`
+	Type      AddonType `json:"type"`
+	Version   string    `json:"version"`
+	Untracked bool      `json:"untracked,omitempty"`
+	Commit    string    `json:"commit,omitempty"` // Only used when tracking a branch.
 }
 
 // The complete list of addons mapping their repo names

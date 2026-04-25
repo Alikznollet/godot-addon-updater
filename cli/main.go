@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/alecthomas/kong"
+	"github.com/alikznollet/godot-addon-updater/internal/github"
 	"github.com/alikznollet/godot-addon-updater/internal/manifest"
 	"github.com/alikznollet/godot-addon-updater/internal/util"
 )
@@ -61,7 +63,8 @@ func (cmd *InitCmd) Run() error {
 
 type InstallCmd struct {
 	Repo    string `arg:"" name:"repo" help:"The GitHub repository (e.g. ramokz/phantom-camera)."`
-	Version string `short:"v" default:"latest" help:"Specific version tag to install."`
+	Version string `short:"v" xor:"target" help:"Specific version tag to install (e.g. v1.0.0)."`
+	Branch  string `short:"b" xor:"target" help:"Branch to track instead of tracking releases (e.g. main)."`
 }
 
 func (cmd *InstallCmd) Run() error {
@@ -69,8 +72,49 @@ func (cmd *InstallCmd) Run() error {
 		return err
 	}
 
-	fmt.Printf("Installing %s\n", cmd.Repo)
-	fmt.Printf("Requested Version: %s\n", cmd.Version)
+	// Grab the manifest and versions
+	targetVersion := cmd.Version
+	targetBranch := cmd.Branch
+	manifest, err := manifest.LoadManifest()
+	if err != nil {
+		return err
+	}
+
+	// Split the repo name
+	parts := strings.Split(cmd.Repo, "/")
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return fmt.Errorf("Invalid repository format. Must be 'owner/repo'.")
+	}
+
+	owner := parts[0]
+	repo := parts[1]
+
+	// If nothing specified we default to the latest release.
+	if targetVersion == "" && targetBranch == "" {
+		targetVersion = "latest"
+	}
+
+	if targetBranch != "" {
+		fmt.Printf("Installing %s (Tracking Branch: %s)\n", cmd.Repo, targetBranch)
+	} else {
+		fmt.Printf("Installing %s (Release Version: %s)\n", cmd.Repo, targetVersion)
+
+		// Fetch the target release from github.
+		release, err := github.GetRelease(owner, repo, targetVersion)
+		if err != nil {
+			return err
+		}
+
+		// If the Release TagName and addon Version are the same we don't install.
+		if addon, exists := manifest.Addons[repo]; exists {
+			if release.TagName == addon.Version {
+				fmt.Printf("%s is already up to date (%s)\n", cmd.Repo, release.TagName)
+				return nil
+			}
+		}
+
+		fmt.Printf("%s", release.ZipballUrl)
+	}
 
 	return nil
 }

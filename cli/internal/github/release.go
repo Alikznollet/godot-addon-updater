@@ -1,4 +1,4 @@
-package github_release
+package github
 
 import (
 	"encoding/json"
@@ -13,8 +13,9 @@ type GitHubRelease struct {
 	ZipballUrl string `json:"zipball_url"`
 }
 
-func getLatestRelease(owner string, repo string) (*GitHubRelease, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo)
+// Returns a GitHub Release.
+func GetRelease(owner string, repo string, version string) (*GitHubRelease, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%s", owner, repo, version)
 
 	resp, err := http.Get(url)
 

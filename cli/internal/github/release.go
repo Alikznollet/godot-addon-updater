@@ -4,11 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/alikznollet/godot-addon-updater/internal/types"
 )
 
-func getLatestRelease(owner string, repo string) (*types.GitHubRelease, error) {
+// The Tag name of a release and the url
+// to the zipball that could be downloaded.
+type GitHubRelease struct {
+	TagName    string `json:"tag_name"`
+	ZipballUrl string `json:"zipball_url"`
+}
+
+func getLatestRelease(owner string, repo string) (*GitHubRelease, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo)
 
 	resp, err := http.Get(url)
@@ -23,7 +28,7 @@ func getLatestRelease(owner string, repo string) (*types.GitHubRelease, error) {
 		return nil, fmt.Errorf("GitHub API returned status: %d", resp.StatusCode)
 	}
 
-	var release types.GitHubRelease
+	var release GitHubRelease
 	err = json.NewDecoder((resp.Body)).Decode(&release)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse JSON: %v", err)

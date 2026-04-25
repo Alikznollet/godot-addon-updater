@@ -8,6 +8,19 @@ import (
 
 // -- Command Structs -- //
 
+// Init
+
+type InitCmd struct {
+	Force bool `short:"f" help:"Overwrites existing addons.json."`
+}
+
+func (cmd *InitCmd) Run() error {
+	fmt.Println("Initializing addons.json...")
+	fmt.Printf("Force Overwrite: %v\n", cmd.Force)
+
+	return nil
+}
+
 // Install
 
 type InstallCmd struct {
@@ -18,6 +31,25 @@ type InstallCmd struct {
 func (cmd *InstallCmd) Run() error {
 	fmt.Printf("Installing %s\n", cmd.Repo)
 	fmt.Printf("Requested Version: %s\n", cmd.Version)
+
+	return nil
+}
+
+// Uninstall
+
+type UninstallCmd struct {
+	Repo string `arg:"" name:"repo" help:"The GitHub repository (e.g. ramokz/phantom-camera)."`
+	Keep bool   `short:"k" help:"Keep the addon files in res://addons/ but remove from tracking."`
+}
+
+func (cmd *UninstallCmd) Run() error {
+	fmt.Printf("Attempting to uninstall %s\n", cmd.Repo)
+
+	if cmd.Keep {
+		fmt.Println("Removing from addons.json ONLY. Files will be kept.")
+	} else {
+		fmt.Println("Removing from addons.json AND deleting files from res://addons")
+	}
 
 	return nil
 }
@@ -38,15 +70,23 @@ func (cmd *UpdateCmd) Run() error {
 	return nil
 }
 
-// Init
+// Sync
 
-type InitCmd struct {
-	Force bool `short:"f" help:"Overwrites existing addons.json."`
+type SyncCmd struct{}
+
+func (cmd *SyncCmd) Run() error {
+	fmt.Println("Looking for untracked addons...")
+	return nil
 }
 
-func (cmd *InitCmd) Run() error {
-	fmt.Println("Initializing addons.json...")
-	fmt.Printf("Force Overwrite: %v\n", cmd.Force)
+// Check
+
+type CheckCmd struct {
+	Json bool `short:"j" help:"Return a structured JSON object instead of CLI output."`
+}
+
+func (cmd *CheckCmd) Run() error {
+	fmt.Println("Checking for updates...")
 
 	return nil
 }
@@ -54,9 +94,12 @@ func (cmd *InitCmd) Run() error {
 // CLI
 
 var cli struct {
-	Install InstallCmd `cmd:"" help:"Install a new addon from GitHub."`
-	Update  UpdateCmd  `cmd:"" help:"Check for updates for all installed addons."`
-	Init    InitCmd    `cmd:"" help:"Initialize a new addons.json file."`
+	Init      InitCmd      `cmd:"" help:"Initialize a new addons.json file."`
+	Install   InstallCmd   `cmd:"" help:"Install a new addon from GitHub."`
+	Uninstall UninstallCmd `cmd:"" help:"Uninstall an addon from the project."`
+	Update    UpdateCmd    `cmd:"" help:"Check for updates for all installed addons."`
+	Sync      SyncCmd      `cmd:"" help:"Synchronize any untracked addons in the project."`
+	Check     CheckCmd     `cmd:"" help:"Check for updates without directly installing them."`
 }
 
 func main() {

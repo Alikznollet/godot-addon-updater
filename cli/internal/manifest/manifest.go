@@ -26,11 +26,12 @@ type AddonManifest struct {
 
 // Adds an addon to the struct.
 // Should only be called after installing the addon
-// succeeds.
-func (m *AddonManifest) AddAddon(repo string, version string) {
+// succeeds. The name of the folder is used to index.
+func (m *AddonManifest) AddAddon(folder string, repo string, version string) {
 	// We don't have to check if the map exists because that was
 	// done when the object was created.
-	m.Addons[repo] = Addon{
+	m.Addons[folder] = Addon{
+		Repo:    repo,
 		Version: version,
 	}
 }
@@ -39,4 +40,14 @@ func (m *AddonManifest) AddAddon(repo string, version string) {
 // Will silently fail if the addon wasn't installed in the first place.
 func (m *AddonManifest) RemoveAddon(repo string) {
 	delete(m.Addons, repo)
+}
+
+// Looks for an addon by their repo name.
+func (m *AddonManifest) FindByRepo(repo string) (string, Addon, bool) {
+	for folderName, addon := range m.Addons {
+		if addon.Repo == repo {
+			return folderName, addon, true
+		}
+	}
+	return "", Addon{}, false // No Addon found.
 }

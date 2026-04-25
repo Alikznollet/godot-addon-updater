@@ -75,7 +75,7 @@ func (cmd *InstallCmd) Run() error {
 	// Grab the manifest and versions
 	targetVersion := cmd.Version
 	targetBranch := cmd.Branch
-	manifest, err := manifest.LoadManifest()
+	m, err := manifest.LoadManifest()
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,9 @@ func (cmd *InstallCmd) Run() error {
 
 	if targetBranch != "" {
 		fmt.Printf("Installing %s (Tracking Branch: %s)\n", cmd.Repo, targetBranch)
+		// TODO: Branch following functionality.
 	} else {
+		// TODO: Split this into functions!
 		fmt.Printf("Installing %s (Release Version: %s)\n", cmd.Repo, targetVersion)
 
 		// Fetch the target release from github.
@@ -105,16 +107,29 @@ func (cmd *InstallCmd) Run() error {
 			return err
 		}
 
-		// If the Release TagName and addon Version are the same we don't install.
-		if addon, exists := manifest.Addons[repo]; exists {
+		folderName, addon, isTracked := m.FindByRepo(cmd.Repo)
+
+		if isTracked {
 			if release.TagName == addon.Version {
 				fmt.Printf("%s is already up to date (%s)\n", cmd.Repo, release.TagName)
 				return nil
 			}
+			fmt.Printf("Updating %s from %s -> %s...\n", folderName, addon.Version, release.TagName)
+		} else {
+			fmt.Printf("Installing %s (%s)...\n", cmd.Repo, release.TagName)
 		}
 
-		fmt.Printf("%s", release.ZipballUrl)
+		loc, err := github.DownloadAndExtract(release.ZipballUrl)
+		if err != nil {
+			return err
+		}
+
+		// Make sure to pass the full repo name to the Addon.
+		m.AddAddon(loc, cmd.Repo, release.TagName)
+		manifest.SaveManifest(m) // Make sure to save.
 	}
+
+	fmt.Println("Addon installed successfully!")
 
 	return nil
 }

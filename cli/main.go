@@ -1,3 +1,6 @@
+// Copyright 2026 Alikznollet
+// GNU GPL
+
 package main
 
 import (
@@ -12,12 +15,12 @@ import (
 
 // -- Command Structs -- //
 
-// Init
-
+// Initialization Command structure used by Kong.
 type InitCmd struct {
 	Force bool `short:"f" help:"Overwrites existing addons.json."`
 }
 
+// Code Ran by the initialization.
 func (cmd *InitCmd) Run() error {
 	if err := util.EnsureGodotProject(); err != nil {
 		return err
@@ -44,6 +47,12 @@ func (cmd *InitCmd) Run() error {
 	if err != nil {
 		return err
 	}
+
+	path, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Initialized addons.json file at %s\n", path)
 
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/kong"
+	"github.com/alikznollet/godot-addon-updater/internal/util"
 )
 
 // -- Command Structs -- //
@@ -15,6 +16,10 @@ type InitCmd struct {
 }
 
 func (cmd *InitCmd) Run() error {
+	if err := util.EnsureGodotProject(); err != nil {
+		return err
+	}
+
 	fmt.Println("Initializing addons.json...")
 	fmt.Printf("Force Overwrite: %v\n", cmd.Force)
 
@@ -29,6 +34,10 @@ type InstallCmd struct {
 }
 
 func (cmd *InstallCmd) Run() error {
+	if err := util.EnsureGodotProject(); err != nil {
+		return err
+	}
+
 	fmt.Printf("Installing %s\n", cmd.Repo)
 	fmt.Printf("Requested Version: %s\n", cmd.Version)
 
@@ -43,6 +52,10 @@ type UninstallCmd struct {
 }
 
 func (cmd *UninstallCmd) Run() error {
+	if err := util.EnsureGodotProject(); err != nil {
+		return err
+	}
+
 	fmt.Printf("Attempting to uninstall %s\n", cmd.Repo)
 
 	if cmd.Keep {
@@ -61,6 +74,10 @@ type UpdateCmd struct {
 }
 
 func (cmd *UpdateCmd) Run() error {
+	if err := util.EnsureGodotProject(); err != nil {
+		return err
+	}
+
 	if cmd.Name == "all" {
 		fmt.Println("Attempting to update all installed addons...")
 	} else {
@@ -75,6 +92,10 @@ func (cmd *UpdateCmd) Run() error {
 type SyncCmd struct{}
 
 func (cmd *SyncCmd) Run() error {
+	if err := util.EnsureGodotProject(); err != nil {
+		return err
+	}
+
 	fmt.Println("Looking for untracked addons...")
 	return nil
 }
@@ -86,6 +107,10 @@ type CheckCmd struct {
 }
 
 func (cmd *CheckCmd) Run() error {
+	if err := util.EnsureGodotProject(); err != nil {
+		return err
+	}
+
 	fmt.Println("Checking for updates...")
 
 	return nil

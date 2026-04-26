@@ -98,7 +98,6 @@ func (cmd *InstallCmd) Run() error {
 		fmt.Printf("Installing %s (Tracking Branch: %s)\n", cmd.Repo, targetBranch)
 		// TODO: Branch following functionality.
 	} else {
-		// TODO: Split this into functions!
 		fmt.Printf("Installing %s (Release Version: %s)\n", cmd.Repo, targetVersion)
 
 		// Fetch the target release from github.
@@ -125,7 +124,7 @@ func (cmd *InstallCmd) Run() error {
 		}
 
 		// Make sure to pass the full repo name to the Addon.
-		m.AddAddon(loc, cmd.Repo, release.TagName)
+		m.AddRelease(loc, cmd.Repo, release.TagName)
 		manifest.SaveManifest(m) // Make sure to save.
 	}
 

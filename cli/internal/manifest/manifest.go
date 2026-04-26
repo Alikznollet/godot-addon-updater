@@ -3,11 +3,11 @@ package manifest
 import "fmt"
 
 // Enum used as type of Addon.
-type AddonType int
+type AddonType string
 
 const (
-	Release AddonType = iota
-	Branch
+	Release AddonType = "release"
+	Branch  AddonType = "branch"
 )
 
 // A single addon struct with JSON support.
@@ -26,14 +26,27 @@ type AddonManifest struct {
 	Addons map[string]Addon `json:"addons"`
 }
 
+// Adds an addon based on the branch of a repository.
+// Will track the commit and the branch name.
+// Should only be called after installation succeeds.
+func (m *AddonManifest) AddBranch(folder string, repo string, branch string, commit string) {
+	m.Addons[folder] = Addon{
+		Repo:    repo,
+		Type:    Branch,
+		Version: branch, // This is the branch name.
+		Commit:  commit,
+	}
+}
+
 // Adds an addon to the struct.
 // Should only be called after installing the addon
 // succeeds. The name of the folder is used to index.
-func (m *AddonManifest) AddAddon(folder string, repo string, version string) {
+func (m *AddonManifest) AddRelease(folder string, repo string, version string) {
 	// We don't have to check if the map exists because that was
 	// done when the object was created.
 	m.Addons[folder] = Addon{
 		Repo:    repo,
+		Type:    Release,
 		Version: version,
 	}
 }

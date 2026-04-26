@@ -114,7 +114,7 @@ func (cmd *InstallCmd) Run() error {
 				}
 				fmt.Printf("Updating %s from %s -> %s...\n", cmd.Repo, addon.Commit, commitHash)
 			} else {
-				fmt.Printf("Switching to branch tracking for %s on %s (%s).", cmd.Repo, targetBranch, commitHash)
+				fmt.Printf("Switching to branch tracking for %s on %s (%s).\n", cmd.Repo, targetBranch, commitHash)
 			}
 		} else {
 			fmt.Printf("Tracking branch %s (%s)...\n", targetBranch, commitHash)

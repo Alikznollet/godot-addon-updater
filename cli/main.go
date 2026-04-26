@@ -146,13 +146,17 @@ func (cmd *UninstallCmd) Run() error {
 		return err
 	}
 
+	// Load the manifest.
+	m, err := manifest.LoadManifest()
+	if err != nil {
+		return err
+	}
+
 	fmt.Printf("Attempting to uninstall %s\n", cmd.Repo)
 
-	if cmd.Keep {
-		fmt.Println("Removing from addons.json ONLY. Files will be kept.")
-	} else {
-		fmt.Println("Removing from addons.json AND deleting files from res://addons")
-	}
+	// Remove the addon frfr
+	m.RemoveAddon(cmd.Repo, cmd.Keep)
+	manifest.SaveManifest(m)
 
 	return nil
 }

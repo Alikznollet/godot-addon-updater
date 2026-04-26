@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 // Saves an AddonManifest object to addons.json.
@@ -53,4 +55,22 @@ func LoadManifest() (AddonManifest, error) {
 	}
 
 	return manifest, nil
+}
+
+// Removes an addon folder from the addons/ folder in the project.
+// Based on the folderName passed.
+func deleteAddonFolder(folderName string) error {
+	// Check for any malicious paths.
+	cleanPath := filepath.Clean(folderName)
+	if strings.Contains(cleanPath, "..") || strings.Contains(cleanPath, "/") || strings.Contains(cleanPath, "\\") {
+		return fmt.Errorf("Invalid folder name: %s", cleanPath)
+	}
+
+	// Actually remove the folder.
+	targetDir := filepath.Join("addons", cleanPath)
+	if err := os.RemoveAll(targetDir); err != nil {
+		return fmt.Errorf("Failed to delete folder %s: %v", targetDir, err)
+	}
+
+	return nil
 }

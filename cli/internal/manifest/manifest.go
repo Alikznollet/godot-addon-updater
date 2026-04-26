@@ -1,5 +1,7 @@
 package manifest
 
+import "fmt"
+
 // Enum used as type of Addon.
 type AddonType int
 
@@ -38,8 +40,26 @@ func (m *AddonManifest) AddAddon(folder string, repo string, version string) {
 
 // Removes an addon from the struct.
 // Will silently fail if the addon wasn't installed in the first place.
-func (m *AddonManifest) RemoveAddon(repo string) {
-	delete(m.Addons, repo)
+// Will also remove the folder the addon was installed in if prompted.
+func (m *AddonManifest) RemoveAddon(repo string, keep bool) error {
+	folderName, _, isTracked := m.FindByRepo(repo)
+	if !isTracked {
+		fmt.Printf("%s is not actively being tracked in this project.", repo)
+		return nil
+	}
+
+	if !keep {
+		// Removes all files related to this addon.
+		fmt.Printf("Removing all files associated to %s\n", repo)
+		err := deleteAddonFolder(folderName)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Removes the addon from the dictionary.
+	delete(m.Addons, folderName)
+	return nil
 }
 
 // Looks for an addon by their repo name.

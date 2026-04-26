@@ -159,6 +159,7 @@ func (cmd *InstallCmd) Run() error {
 		m.AddRelease(loc, cmd.Repo, release.TagName)
 	}
 
+	// TODO: Automatically enable addons when installed?
 	manifest.SaveManifest(m) // Make sure to save.
 	fmt.Println("Addon installed successfully!")
 

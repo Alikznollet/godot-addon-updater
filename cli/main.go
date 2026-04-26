@@ -96,7 +96,39 @@ func (cmd *InstallCmd) Run() error {
 
 	if targetBranch != "" {
 		fmt.Printf("Installing %s (Tracking Branch: %s)\n", cmd.Repo, targetBranch)
-		// TODO: Branch following functionality.
+
+		// Fetch the latest commit from the target branch
+		branchData, err := github.GetBranch(owner, repo, targetBranch)
+		if err != nil {
+			return err
+		}
+
+		// Extract the commit for fetching.
+		commitHash := branchData.Commit.Sha
+		_, addon, isTracked := m.FindByRepo(cmd.Repo)
+
+		if isTracked {
+			if addon.Commit != "" {
+				if addon.Commit == commitHash {
+					fmt.Printf("%s is already up to date on branch %s (%s)\n", cmd.Repo, targetBranch, commitHash)
+				}
+				fmt.Printf("Updating %s from %s -> %s...\n", cmd.Repo, addon.Commit, commitHash)
+			} else {
+				fmt.Printf("Switching to branch tracking for %s on %s (%s).", cmd.Repo, targetBranch, commitHash)
+			}
+		} else {
+			fmt.Printf("Tracking branch %s (%s)...\n", targetBranch, commitHash)
+		}
+
+		// Build the URL and download/extract the files.
+		zipUrl := fmt.Sprintf("https://api.github.com/repos/%s/%s/zipball/%s", owner, repo, commitHash)
+		loc, err := github.DownloadAndExtract(zipUrl)
+		if err != nil {
+			return err
+		}
+
+		// Make sure to pass the full repo name and branch+commit.
+		m.AddBranch(loc, cmd.Repo, targetBranch, commitHash)
 	} else {
 		fmt.Printf("Installing %s (Release Version: %s)\n", cmd.Repo, targetVersion)
 
@@ -106,16 +138,16 @@ func (cmd *InstallCmd) Run() error {
 			return err
 		}
 
-		folderName, addon, isTracked := m.FindByRepo(cmd.Repo)
+		_, addon, isTracked := m.FindByRepo(cmd.Repo)
 
 		if isTracked {
 			if release.TagName == addon.Version {
 				fmt.Printf("%s is already up to date (%s)\n", cmd.Repo, release.TagName)
 				return nil
 			}
-			fmt.Printf("Updating %s from %s -> %s...\n", folderName, addon.Version, release.TagName)
+			fmt.Printf("Updating %s from %s -> %s...\n", cmd.Repo, addon.Version, release.TagName)
 		} else {
-			fmt.Printf("Installing %s (%s)...\n", cmd.Repo, release.TagName)
+			fmt.Printf("Tracking releases (%s)...\n", release.TagName)
 		}
 
 		loc, err := github.DownloadAndExtract(release.ZipballUrl)
@@ -125,9 +157,9 @@ func (cmd *InstallCmd) Run() error {
 
 		// Make sure to pass the full repo name to the Addon.
 		m.AddRelease(loc, cmd.Repo, release.TagName)
-		manifest.SaveManifest(m) // Make sure to save.
 	}
 
+	manifest.SaveManifest(m) // Make sure to save.
 	fmt.Println("Addon installed successfully!")
 
 	return nil

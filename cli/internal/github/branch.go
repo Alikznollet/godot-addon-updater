@@ -11,6 +11,8 @@ import (
 type GitHubBranch struct {
 	Name   string       `json:"name"`
 	Commit GitHubCommit `json:"commit"`
+	owner  string
+	repo   string
 }
 
 type GitHubCommit struct {
@@ -47,6 +49,8 @@ func GetBranch(owner string, repo string, branch string) (*GitHubBranch, error) 
 	if err := json.NewDecoder(resp.Body).Decode(&branchData); err != nil {
 		return nil, fmt.Errorf("Failed to parse GitHub response: %v", err)
 	}
+	branchData.owner = owner
+	branchData.repo = repo
 
 	return &branchData, nil
 }

@@ -15,7 +15,12 @@ type GitHubRelease struct {
 
 // Returns a GitHub Release.
 func GetRelease(owner string, repo string, version string) (*GitHubRelease, error) {
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%s", owner, repo, version)
+	var url string
+	if version == "latest" {
+		url = fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%s", owner, repo, version)
+	} else {
+		url = fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/tags/%s", owner, repo, version)
+	}
 
 	resp, err := http.Get(url)
 

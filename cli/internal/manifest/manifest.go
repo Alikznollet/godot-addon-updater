@@ -1,6 +1,11 @@
 package manifest
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/alikznollet/godot-addon-updater/internal/github"
+)
 
 // Enum used as type of Addon.
 type AddonType string
@@ -83,4 +88,55 @@ func (m *AddonManifest) FindByRepo(repo string) (string, Addon, bool) {
 		}
 	}
 	return "", Addon{}, false // No Addon found.
+}
+
+// Returns whether a repository is up to date or not.
+func (m *AddonManifest) CheckAddon(repo string) (bool, github.AddonRef, error) {
+	_, addon, isTracked := m.FindByRepo(repo)
+
+	if !isTracked {
+		return false, nil, fmt.Errorf("%s is not tracked in the current project.", repo)
+	}
+
+	// Split the repo name
+	parts := strings.Split(repo, "/")
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return false, nil, fmt.Errorf("Invalid repository format. Must be 'owner/repo'.")
+	}
+
+	o := parts[0]
+	r := parts[1]
+
+	var ref github.AddonRef
+	var err error
+
+	switch addon.Type {
+	case Branch:
+		ref, err = github.GetAddonRef(o, r, addon.Version, true)
+		if err != nil {
+			return false, ref, err
+		}
+
+		// Check whether the commit hashes are the same.
+		// If not then the ref can be used to pull the updated addon.
+		if ref.GetVersion() == addon.Commit {
+			return true, ref, nil
+		} else {
+			return false, ref, nil
+		}
+	case Release:
+		ref, err = github.GetAddonRef(o, r, "latest", false)
+		if err != nil {
+			return false, ref, err
+		}
+
+		// Check whether the release is still up to date.
+		if ref.GetVersion() == addon.Version {
+			return true, ref, nil
+		} else {
+			return false, ref, nil
+		}
+	}
+
+	return true, ref, nil
 }

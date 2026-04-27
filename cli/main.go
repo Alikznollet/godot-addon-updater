@@ -98,13 +98,13 @@ func (cmd *InstallCmd) Run() error {
 		fmt.Printf("Installing %s (Tracking Branch: %s)\n", cmd.Repo, targetBranch)
 
 		// Fetch the latest commit from the target branch
-		branchData, err := github.GetBranch(owner, repo, targetBranch)
+		branchData, err := github.GetAddonRef(owner, repo, targetBranch, true)
 		if err != nil {
 			return err
 		}
 
 		// Extract the commit for fetching.
-		commitHash := branchData.Commit.Sha
+		commitHash := branchData.GetVersion()
 		_, addon, isTracked := m.FindByRepo(cmd.Repo)
 
 		if isTracked {
@@ -121,7 +121,7 @@ func (cmd *InstallCmd) Run() error {
 		}
 
 		// Build the URL and download/extract the files.
-		zipUrl := fmt.Sprintf("https://api.github.com/repos/%s/%s/zipball/%s", owner, repo, commitHash)
+		zipUrl := branchData.GetZipballUrl()
 		loc, err := github.DownloadAndExtract(zipUrl)
 		if err != nil {
 			return err
@@ -133,7 +133,7 @@ func (cmd *InstallCmd) Run() error {
 		fmt.Printf("Installing %s (Release Version: %s)\n", cmd.Repo, targetVersion)
 
 		// Fetch the target release from github.
-		release, err := github.GetRelease(owner, repo, targetVersion)
+		release, err := github.GetAddonRef(owner, repo, targetVersion, false)
 		if err != nil {
 			return err
 		}
@@ -141,22 +141,22 @@ func (cmd *InstallCmd) Run() error {
 		_, addon, isTracked := m.FindByRepo(cmd.Repo)
 
 		if isTracked {
-			if release.TagName == addon.Version {
-				fmt.Printf("%s is already up to date (%s)\n", cmd.Repo, release.TagName)
+			if release.GetVersion() == addon.Version {
+				fmt.Printf("%s is already up to date (%s)\n", cmd.Repo, release.GetVersion())
 				return nil
 			}
-			fmt.Printf("Updating %s from %s -> %s...\n", cmd.Repo, addon.Version, release.TagName)
+			fmt.Printf("Updating %s from %s -> %s...\n", cmd.Repo, addon.Version, release.GetVersion())
 		} else {
-			fmt.Printf("Tracking releases (%s)...\n", release.TagName)
+			fmt.Printf("Tracking releases (%s)...\n", release.GetVersion())
 		}
 
-		loc, err := github.DownloadAndExtract(release.ZipballUrl)
+		loc, err := github.DownloadAndExtract(release.GetZipballUrl())
 		if err != nil {
 			return err
 		}
 
 		// Make sure to pass the full repo name to the Addon.
-		m.AddRelease(loc, cmd.Repo, release.TagName)
+		m.AddRelease(loc, cmd.Repo, release.GetVersion())
 	}
 
 	// TODO: Automatically enable addons when installed?
@@ -196,7 +196,8 @@ func (cmd *UninstallCmd) Run() error {
 // Update
 
 type UpdateCmd struct {
-	Name string `short:"n" default:"all" help:"Specific addon to update."`
+	Repos []string `arg:"" optional:"" name:"repos" help:"List of all specific addons to update."`
+	Yes   bool     `short:"k" help:"Automatically confirm each update without user interaction."`
 }
 
 func (cmd *UpdateCmd) Run() error {
@@ -204,10 +205,14 @@ func (cmd *UpdateCmd) Run() error {
 		return err
 	}
 
-	if cmd.Name == "all" {
-		fmt.Println("Attempting to update all installed addons...")
-	} else {
-		fmt.Printf("Attempting to update %s\n", cmd.Name)
+	// Load the manifest.
+	_, err := manifest.LoadManifest()
+	if err != nil {
+		return err
+	}
+
+	if len(cmd.Repos) == 0 {
+		fmt.Println("Attempting to update ALL addons...")
 	}
 
 	return nil
@@ -238,6 +243,23 @@ func (cmd *CheckCmd) Run() error {
 	}
 
 	fmt.Println("Checking for updates...")
+
+	// Load the manifest.
+	m, err := manifest.LoadManifest()
+	if err != nil {
+		return err
+	}
+
+	// TODO: Build in JSON support.
+	for _, addon := range m.Addons {
+		isUpToDate, ref, err := m.CheckAddon(addon.Repo)
+		if err != nil {
+			return err
+		}
+		if !isUpToDate {
+			fmt.Printf("A newer version of %s is available (%s -> %s).", addon.Repo, addon.Version, ref.GetVersion())
+		}
+	}
 
 	return nil
 }

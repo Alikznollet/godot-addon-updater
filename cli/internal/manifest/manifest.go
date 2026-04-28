@@ -15,6 +15,16 @@ const (
 	Branch  AddonType = "branch"
 )
 
+// This is used as a way to pass data to the editor plugin.
+type OutdatedAddon struct {
+	Folder  string    `json:"folder"`
+	Repo    string    `json:"repo"`
+	Current string    `json:"current_version"`
+	Latest  string    `json:"latest_version"`
+	Branch  string    `json:"branch,omitempty"`
+	Type    AddonType `json:"addon_type"`
+}
+
 // A single addon struct with JSON support.
 // This struct is written to addons.json.
 type Addon struct {

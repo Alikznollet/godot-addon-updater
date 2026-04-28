@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alikznollet/godot-addon-updater/internal/github"
+	"github.com/alikznollet/godot-wisp/cli/internal/github"
 )
 
 // Enum used as type of Addon.

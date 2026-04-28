@@ -1,4 +1,4 @@
-module github.com/alikznollet/godot-addon-updater
+module github.com/alikznollet/godot-wisp/cli
 
 go 1.26.2
 

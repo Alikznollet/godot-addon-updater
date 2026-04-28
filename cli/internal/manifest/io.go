@@ -62,7 +62,7 @@ func LoadManifest() (AddonManifest, error) {
 	if err != nil {
 		// Return a clear error if the file doesn't exist
 		if os.IsNotExist(err) {
-			return manifest, errors.New("addons.json not found. Run 'gau init' first.")
+			return manifest, errors.New("addons.json not found. Run 'wisp init' first.")
 		}
 		return manifest, fmt.Errorf("Failed to read addons.json: %w", err)
 	}

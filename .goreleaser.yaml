@@ -1,4 +1,4 @@
-project_name: gau
+project_name: wisp
 
 builds:
   - env:
@@ -44,7 +44,7 @@ brews:
       owner: alikznollet
       name: homebrew-tap
     description: "A completely optional package manager for Godot Addons."
-    homepage: "https://github.com/alikznollet/godot-addon-updater"
+    homepage: "https://github.com/alikznollet/godot-wisp"
     goarm: 6
 
 scoops:
@@ -52,4 +52,4 @@ scoops:
       owner: alikznollet
       name: scoop-bucket
     description: "A completely optional package manager for Godot Addons."
-    homepage: "https://github.com/alikznollet/godot-addon-updater"
+    homepage: "https://github.com/alikznollet/godot-wisp"

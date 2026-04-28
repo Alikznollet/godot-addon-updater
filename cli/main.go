@@ -13,9 +13,9 @@ import (
 	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/alikznollet/godot-addon-updater/internal/github"
-	"github.com/alikznollet/godot-addon-updater/internal/manifest"
-	"github.com/alikznollet/godot-addon-updater/internal/util"
+	"github.com/alikznollet/godot-wisp/cli/internal/github"
+	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
+	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 // -- Command Structs -- //
@@ -601,8 +601,8 @@ var cli struct {
 func main() {
 	ctx := kong.Parse(
 		&cli,
-		kong.Name("gau"),
-		kong.Description("A CLI tool to manage Godot addons from GitHub."),
+		kong.Name("wisp"),
+		kong.Description("The lightweight way to manage your Godot addons."),
 		kong.UsageOnError(),
 	)
 

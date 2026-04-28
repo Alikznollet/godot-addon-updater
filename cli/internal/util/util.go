@@ -53,3 +53,10 @@ func AskForConfirmation(prompt string) bool {
 		fmt.Println("Please type 'y' for yes or 'n' for no.")
 	}
 }
+
+// Asks for an input
+func AskInput(prompt string, scanner *bufio.Scanner) string {
+	fmt.Print(prompt)
+	scanner.Scan()
+	return strings.TrimSpace(scanner.Text())
+}

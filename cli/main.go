@@ -588,14 +588,18 @@ func (cmd *ListCmd) Run() error {
 
 // CLI
 
+// GoReleaser will inject the current version here on release.
+var version = "dev"
+
 var cli struct {
-	Init      InitCmd      `cmd:"" help:"Initialize a new addons.json file."`
-	Install   InstallCmd   `cmd:"" help:"Install a new addon from GitHub."`
-	Uninstall UninstallCmd `cmd:"" help:"Uninstall an addon from the project."`
-	Update    UpdateCmd    `cmd:"" help:"Check for updates for all installed addons."`
-	Sync      SyncCmd      `cmd:"" help:"Synchronize any untracked addons in the project."`
-	Check     CheckCmd     `cmd:"" help:"Check for updates without directly installing them."`
-	List      ListCmd      `cmd:"" help:"List all addons in the current project."`
+	Init      InitCmd          `cmd:"" help:"Initialize a new addons.json file."`
+	Install   InstallCmd       `cmd:"" help:"Install a new addon from GitHub."`
+	Uninstall UninstallCmd     `cmd:"" help:"Uninstall an addon from the project."`
+	Update    UpdateCmd        `cmd:"" help:"Check for updates for all installed addons."`
+	Sync      SyncCmd          `cmd:"" help:"Synchronize any untracked addons in the project."`
+	Check     CheckCmd         `cmd:"" help:"Check for updates without directly installing them."`
+	List      ListCmd          `cmd:"" help:"List all addons in the current project."`
+	Version   kong.VersionFlag `short:"v" help:"Print the current version and exit."`
 }
 
 func main() {
@@ -604,6 +608,9 @@ func main() {
 		kong.Name("wisp"),
 		kong.Description("The lightweight way to manage your Godot addons."),
 		kong.UsageOnError(),
+		kong.Vars{
+			"version": version,
+		},
 	)
 
 	err := ctx.Run()

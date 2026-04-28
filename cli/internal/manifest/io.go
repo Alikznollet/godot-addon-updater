@@ -11,6 +11,31 @@ import (
 	"strings"
 )
 
+// Returns a list of all folder names inside of res://addons
+func GetAddonFolderContents() ([]string, error) {
+	entries, err := os.ReadDir("addons")
+	if err != nil {
+		// If the folder doesn't exist yet there is nothing to scan.
+		if os.IsNotExist(err) {
+			return make([]string, 0), nil
+		}
+		return nil, err
+	}
+
+	folderNames := make([]string, 0, len(entries))
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue // Skip if the entry isn't a directory.
+		}
+
+		folderName := entry.Name()
+		folderNames = append(folderNames, folderName)
+	}
+
+	return folderNames, nil
+}
+
 // Saves an AddonManifest object to addons.json.
 func SaveManifest(manifest AddonManifest) error {
 	// Serialize the object into the JSON format.

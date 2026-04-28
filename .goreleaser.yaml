@@ -14,7 +14,7 @@ builds:
 
 archives:
   - format: tar.gz
-    format_overrides
+    format_overrides:
       - goos: windows
         format: zip
     name_template: >-

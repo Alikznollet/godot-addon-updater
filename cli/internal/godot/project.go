@@ -9,8 +9,8 @@ import (
 
 const ProjectFile = "project.godot"
 
-// EnablePlugin safely injects an addon into the project.godot file.
-func EnablePlugin(addonFolder string) error {
+// EnableAddon safely injects an addon into the project.godot file.
+func EnableAddon(addonFolder string) error {
 	file, err := os.Open(ProjectFile)
 	if err != nil {
 		return fmt.Errorf("could not open project.godot: %v", err)
@@ -47,7 +47,7 @@ func EnablePlugin(addonFolder string) error {
 			}
 		}
 
-		// 2. If we are in the right section and find the array
+		// If we are in the right section and find the array
 		if inEditorPlugins && strings.HasPrefix(trimmed, "enabled=PackedStringArray(") {
 			foundEnabled = true
 
@@ -85,6 +85,62 @@ func EnablePlugin(addonFolder string) error {
 	}
 
 	// Write the safely modified lines back to disk
+	output := strings.Join(lines, "\n") + "\n"
+	return os.WriteFile(ProjectFile, []byte(output), 0644)
+}
+
+// DisableAddon safely removes an addon from the project.godot file.
+func DisableAddon(addonFolder string) error {
+	file, err := os.Open(ProjectFile)
+	if err != nil {
+		return nil // If project.godot doesn't exist, we don't care!
+	}
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	file.Close()
+
+	targetPath := fmt.Sprintf(`"res://addons/%s/plugin.cfg"`, addonFolder)
+	inEditorPlugins := false
+	modified := false
+
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+
+		if strings.HasPrefix(trimmed, "[") && strings.HasSuffix(trimmed, "]") {
+			inEditorPlugins = (trimmed == "[editor_plugins]")
+		}
+
+		if inEditorPlugins && strings.HasPrefix(trimmed, "enabled=PackedStringArray(") {
+			// Extract the contents between the parentheses
+			start := strings.Index(trimmed, "(") + 1
+			end := strings.LastIndex(trimmed, ")")
+			contents := strings.TrimSpace(trimmed[start:end])
+
+			// Split by comma and rebuild the array without our target
+			parts := strings.Split(contents, ",")
+			var newParts []string
+			for _, p := range parts {
+				cleanP := strings.TrimSpace(p)
+				if cleanP != targetPath && cleanP != "" {
+					newParts = append(newParts, cleanP)
+				}
+			}
+
+			// Replace the line
+			lines[i] = fmt.Sprintf("enabled=PackedStringArray(%s)", strings.Join(newParts, ", "))
+			modified = true
+			break
+		}
+	}
+
+	if !modified {
+		return nil // It wasn't enabled in the first place, do nothing!
+	}
+
 	output := strings.Join(lines, "\n") + "\n"
 	return os.WriteFile(ProjectFile, []byte(output), 0644)
 }

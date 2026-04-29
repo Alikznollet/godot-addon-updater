@@ -50,7 +50,7 @@ func (cmd *InstallCmd) Run() error {
 		folderName, _, _ := cmd.Manifest.FindByRepo(cmd.Repo)
 
 		if util.Confirm(false, "Enable '%s' in '%s'?", repo, godot.ProjectFile) {
-			if err := godot.EnablePlugin(folderName); err != nil {
+			if err := godot.EnableAddon(folderName); err != nil {
 				util.Warn("Failed to auto-enable addon: %v", err)
 			} else {
 				util.Success("Addon enabled!")

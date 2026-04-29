@@ -1,15 +1,15 @@
 package commands
 
 import (
+	"github.com/alikznollet/godot-wisp/cli/internal/godot"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
-	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 // A command that needs to be ran inside of a godot project.
 type RequiresGodotProjectCmd struct{}
 
 func (cmd *RequiresGodotProjectCmd) AfterApply() error {
-	return util.EnsureGodotProject()
+	return godot.EnsureGodotProject()
 }
 
 // A command that needs the manifest to function.

@@ -9,6 +9,23 @@ import (
 
 const ProjectFile = "project.godot"
 
+// Ensures the user is running the tool in a godot project.
+func EnsureGodotProject() error {
+	_, err := os.Stat("project.godot")
+
+	// We check whether the Error is "File Does Not Exist"
+	if os.IsNotExist(err) {
+		return fmt.Errorf("no '%s' found. Please run Wisp in the root of a Godot project", ProjectFile)
+	}
+
+	// If a weird different error comes up we return that directly.
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // EnableAddon safely injects an addon into the project.godot file.
 func EnableAddon(addonFolder string) error {
 	file, err := os.Open(ProjectFile)

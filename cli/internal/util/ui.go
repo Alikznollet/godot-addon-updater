@@ -10,6 +10,10 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
+//
+// Functions that help print output prettier.
+//
+
 var (
 	Cyan    = color.New(color.FgCyan).SprintFunc()
 	Green   = color.New(color.FgGreen).SprintFunc()
@@ -44,6 +48,20 @@ func Fatal(msg string, args ...interface{}) {
 	// You can add a little padding or a "Exiting..." message here
 	os.Exit(1)
 }
+
+// Print a list item formatted.
+func PrintListItem(name string, status string, details string) {
+	fmt.Printf("  %s %s\t%s %s\n",
+		Cyan("•"),
+		name,
+		Yellow("["+status+"]"),
+		details,
+	)
+}
+
+//
+// Functions to help receive input.
+//
 
 // Internal helper to handle the "Ask" logic
 func ask(label string, defaultVal string) string {

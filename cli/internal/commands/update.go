@@ -13,25 +13,16 @@ import (
 //
 
 type UpdateCmd struct {
+	RequiresManifestCmd
 	Repos []string `arg:"" optional:"" name:"repos" help:"List of all specific addons to update."`
 	Yes   bool     `short:"y" help:"Automatically confirm each update without user interaction."`
 }
 
 func (cmd *UpdateCmd) Run() error {
-	if err := util.EnsureGodotProject(); err != nil {
-		return err
-	}
-
-	// Load the manifest.
-	m, err := manifest.LoadManifest()
-	if err != nil {
-		return err
-	}
-
 	var reposToGet []manifest.Addon
 	if len(cmd.Repos) == 0 {
-		reposToGet = make([]manifest.Addon, 0, len(m.Addons))
-		for _, addon := range m.Addons {
+		reposToGet = make([]manifest.Addon, 0, len(cmd.Manifest.Addons))
+		for _, addon := range cmd.Manifest.Addons {
 			if !addon.Untracked {
 				reposToGet = append(reposToGet, addon)
 			}
@@ -39,7 +30,7 @@ func (cmd *UpdateCmd) Run() error {
 	} else {
 		reposToGet = make([]manifest.Addon, 0, len(cmd.Repos))
 		for _, repoName := range cmd.Repos {
-			_, addon, isTracked := m.FindByRepo(repoName)
+			_, addon, isTracked := cmd.Manifest.FindByRepo(repoName)
 			if isTracked {
 				reposToGet = append(reposToGet, addon)
 			}
@@ -52,7 +43,7 @@ func (cmd *UpdateCmd) Run() error {
 	for _, addon := range reposToGet {
 		fmt.Printf("Attempting to update %s...\n", addon.Repo)
 
-		isUpToDate, ref, err := m.CheckAddon(addon.Repo)
+		isUpToDate, ref, err := cmd.Manifest.CheckAddon(addon.Repo)
 		if err != nil {
 			fmt.Printf("Error while checking %s: %v\n", addon.Repo, err)
 			continue
@@ -80,9 +71,9 @@ func (cmd *UpdateCmd) Run() error {
 
 			switch addon.Type {
 			case manifest.Release:
-				m.AddRelease(loc, addon.Repo, ref.GetVersion())
+				cmd.Manifest.AddRelease(loc, addon.Repo, ref.GetVersion())
 			case manifest.Branch:
-				m.AddBranch(loc, addon.Repo, addon.Version, ref.GetVersion())
+				cmd.Manifest.AddBranch(loc, addon.Repo, addon.Version, ref.GetVersion())
 			default:
 				continue
 			}
@@ -92,7 +83,7 @@ func (cmd *UpdateCmd) Run() error {
 	}
 
 	// Make sure to save the manifest after all of this.
-	err = manifest.SaveManifest(m)
+	err := manifest.SaveManifest(cmd.Manifest)
 	if err != nil {
 		return err
 	}

@@ -51,11 +51,11 @@ func InitManifest(force bool) error {
 	m := AddonManifest{
 		Addons: make(map[string]Addon),
 	}
-	return SaveManifest(m)
+	return SaveManifest(&m)
 }
 
 // Saves an AddonManifest object to addons.json.
-func SaveManifest(manifest AddonManifest) error {
+func SaveManifest(manifest *AddonManifest) error {
 	// Serialize the object into the JSON format.
 	jsonData, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
@@ -72,8 +72,8 @@ func SaveManifest(manifest AddonManifest) error {
 }
 
 // Retrieves an AddonManifest object from addons.json.
-func LoadManifest() (AddonManifest, error) {
-	var manifest AddonManifest
+func LoadManifest() (*AddonManifest, error) {
+	var manifest *AddonManifest
 
 	// Read the entire file.
 	data, err := os.ReadFile(ManifestName)

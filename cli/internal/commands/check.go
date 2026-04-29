@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
-	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 //
@@ -13,26 +12,17 @@ import (
 //
 
 type CheckCmd struct {
+	RequiresManifestCmd
 	Json bool `short:"j" help:"Return a structured JSON object instead of CLI output."`
 }
 
 func (cmd *CheckCmd) Run() error {
-	if err := util.EnsureGodotProject(); err != nil {
-		return err
-	}
-
 	fmt.Println("Checking for updates...")
-
-	// Load the manifest.
-	m, err := manifest.LoadManifest()
-	if err != nil {
-		return err
-	}
 
 	var outdated []manifest.OutdatedAddon
 
-	for folderName, addon := range m.Addons {
-		isUpToDate, ref, err := m.CheckAddon(addon.Repo)
+	for folderName, addon := range cmd.Manifest.Addons {
+		isUpToDate, ref, err := cmd.Manifest.CheckAddon(addon.Repo)
 		if err != nil {
 			fmt.Printf("Something went wrong while checking %s, moving to next addon...: %v\n", addon.Repo, err)
 			continue

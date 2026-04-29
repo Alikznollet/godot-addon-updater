@@ -13,15 +13,12 @@ import (
 
 // Initialization Command structure used by Kong.
 type InitCmd struct {
+	RequiresGodotProjectCmd
 	Force bool `short:"f" help:"Overwrites existing addons.json."`
 }
 
 // Code Ran by the initialization.
 func (cmd *InitCmd) Run() error {
-	if err := util.EnsureGodotProject(); err != nil {
-		return err
-	}
-
 	util.Info("Initializing '%s'...", manifest.ManifestName)
 
 	// Initialize the manifest.
@@ -35,7 +32,7 @@ func (cmd *InitCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	util.Success("Initialized '%s' for project %s\n", manifest.ManifestName, path)
+	util.Success("Initialized '%s' for project %s", manifest.ManifestName, path)
 
 	return nil
 }

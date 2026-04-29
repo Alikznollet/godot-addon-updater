@@ -6,7 +6,6 @@ import (
 
 	"github.com/alikznollet/godot-wisp/cli/internal/github"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
-	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 //
@@ -14,23 +13,16 @@ import (
 //
 
 type InstallCmd struct {
+	RequiresManifestCmd
 	Repo    string `arg:"" name:"repo" help:"The GitHub repository (e.g. ramokz/phantom-camera)."`
 	Version string `short:"v" xor:"target" help:"Specific version tag to install (e.g. v1.0.0)."`
 	Branch  string `short:"b" xor:"target" help:"Branch to track instead of tracking releases (e.g. main)."`
 }
 
 func (cmd *InstallCmd) Run() error {
-	if err := util.EnsureGodotProject(); err != nil {
-		return err
-	}
-
 	// Grab the manifest and versions
 	targetVersion := cmd.Version
 	targetBranch := cmd.Branch
-	m, err := manifest.LoadManifest()
-	if err != nil {
-		return err
-	}
 
 	// Split the repo name
 	parts := strings.Split(cmd.Repo, "/")
@@ -57,7 +49,7 @@ func (cmd *InstallCmd) Run() error {
 
 		// Extract the commit for fetching.
 		commitHash := branchData.GetVersion()
-		_, addon, isTracked := m.FindByRepo(cmd.Repo)
+		_, addon, isTracked := cmd.Manifest.FindByRepo(cmd.Repo)
 
 		if isTracked {
 			if addon.Commit != "" {
@@ -80,7 +72,7 @@ func (cmd *InstallCmd) Run() error {
 		}
 
 		// Make sure to pass the full repo name and branch+commit.
-		m.AddBranch(loc, cmd.Repo, targetBranch, commitHash)
+		cmd.Manifest.AddBranch(loc, cmd.Repo, targetBranch, commitHash)
 	} else {
 		fmt.Printf("Installing %s (Release Version: %s)\n", cmd.Repo, targetVersion)
 
@@ -90,7 +82,7 @@ func (cmd *InstallCmd) Run() error {
 			return err
 		}
 
-		_, addon, isTracked := m.FindByRepo(cmd.Repo)
+		_, addon, isTracked := cmd.Manifest.FindByRepo(cmd.Repo)
 
 		if isTracked {
 			if release.GetVersion() == addon.Version {
@@ -108,11 +100,11 @@ func (cmd *InstallCmd) Run() error {
 		}
 
 		// Make sure to pass the full repo name to the Addon.
-		m.AddRelease(loc, cmd.Repo, release.GetVersion())
+		cmd.Manifest.AddRelease(loc, cmd.Repo, release.GetVersion())
 	}
 
 	// TODO: Automatically enable addons when installed?
-	manifest.SaveManifest(m) // Make sure to save.
+	manifest.SaveManifest(cmd.Manifest) // Make sure to save.
 	fmt.Println("Addon installed successfully!")
 
 	return nil

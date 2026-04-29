@@ -16,19 +16,11 @@ import (
 // This file holds the 'wisp sync' command.
 //
 
-type SyncCmd struct{}
+type SyncCmd struct {
+	RequiresManifestCmd
+}
 
 func (cmd *SyncCmd) Run() error {
-	if err := util.EnsureGodotProject(); err != nil {
-		return err
-	}
-
-	// Load the manifest
-	m, err := manifest.LoadManifest()
-	if err != nil {
-		return err
-	}
-
 	// Also grab all of the folder names from addons.
 	folderNames, err := manifest.GetAddonFolderContents()
 	if err != nil {
@@ -52,10 +44,10 @@ func (cmd *SyncCmd) Run() error {
 	}
 
 	// If a tracked addon is no longer in the folders remove it from addons.json
-	for folderName := range m.Addons {
+	for folderName := range cmd.Manifest.Addons {
 		if !physicalFolders[folderName] {
 			fmt.Printf("Folder `%s` no longer exists. Removing the associated addon from addons.json.\n", folderName)
-			delete(m.Addons, folderName)
+			delete(cmd.Manifest.Addons, folderName)
 			manifestChanged = true
 		}
 	}
@@ -65,7 +57,7 @@ func (cmd *SyncCmd) Run() error {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for _, folderName := range folderNames {
-		if _, exists := m.Addons[folderName]; exists {
+		if _, exists := cmd.Manifest.Addons[folderName]; exists {
 			continue // If it exists in the manifest then we skip no matter what.
 		}
 
@@ -81,7 +73,7 @@ func (cmd *SyncCmd) Run() error {
 			fmt.Println("Skipping...")
 		case "2":
 			// We just mark it as untracked and leave it.
-			m.Addons[folderName] = manifest.Addon{Untracked: true}
+			cmd.Manifest.Addons[folderName] = manifest.Addon{Untracked: true}
 			fmt.Printf("Marked '%s' as a local/untracked addon.\n", folderName)
 			manifestChanged = true
 			continue
@@ -129,7 +121,7 @@ func (cmd *SyncCmd) Run() error {
 				}
 
 				// Add the release to the manifest.
-				m.AddRelease(folderName, repo, ref.GetVersion())
+				cmd.Manifest.AddRelease(folderName, repo, ref.GetVersion())
 				fmt.Printf("Linked '%s' to release '%s'.\n", folderName, ref.GetVersion())
 				manifestChanged = true
 			case "2":
@@ -163,7 +155,7 @@ func (cmd *SyncCmd) Run() error {
 				}
 
 				// Add the branch to the manifest.
-				m.AddBranch(folderName, repo, branchName, ref.GetVersion())
+				cmd.Manifest.AddBranch(folderName, repo, branchName, ref.GetVersion())
 				fmt.Printf("Linked '%s' to branch '%s'.\n", folderName, branchName)
 				manifestChanged = true
 			default:
@@ -176,7 +168,7 @@ func (cmd *SyncCmd) Run() error {
 
 	// Save changes to the manifest.
 	if manifestChanged {
-		err := manifest.SaveManifest(m)
+		err := manifest.SaveManifest(cmd.Manifest)
 		if err != nil {
 			return err
 		}

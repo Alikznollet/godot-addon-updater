@@ -4,6 +4,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/alecthomas/kong"
 	"github.com/alikznollet/godot-wisp/cli/internal/commands"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
@@ -28,7 +30,8 @@ var cli struct {
 }
 
 func main() {
-	ctx := kong.Parse(
+	// Build parser manually so we can format errors.
+	parser, err := kong.New(
 		&cli,
 		kong.Name("wisp"),
 		kong.Description("The lightweight way to manage your Godot addons."),
@@ -37,8 +40,18 @@ func main() {
 			"version": version,
 		},
 	)
+	if err != nil {
+		// If it hits this something is fucked...
+		util.Fatal("Failed to build CLI: %v", err)
+	}
 
-	err := ctx.Run()
+	// Parse flags and run hooks
+	ctx, err := parser.Parse(os.Args[1:])
+	if err != nil {
+		util.Fatal("Something went wrong: %v", err)
+	}
+
+	err = ctx.Run()
 
 	if err != nil {
 		util.Fatal("A problem occurred: %v", err)

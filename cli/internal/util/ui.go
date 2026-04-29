@@ -64,14 +64,15 @@ func PrintListItem(name string, status string, details string) {
 //
 
 // Internal helper to handle the "Ask" logic
-func ask(label string, defaultVal string) string {
+func ask(defaultVal string, msg string, args ...interface{}) string {
+	// Format the string here before printing!
+	label := fmt.Sprintf(msg, args...)
 	reader := bufio.NewReader(os.Stdin)
 
-	// Format: ? Label [Default]:
 	if defaultVal != "" {
-		fmt.Printf("%s %s [%s]: ", Magenta("?"), label, Cyan(defaultVal))
+		fmt.Printf("%s %s [%s]: ", Magenta("[?]"), label, Cyan(defaultVal))
 	} else {
-		fmt.Printf("%s %s: ", Magenta("?"), label)
+		fmt.Printf("%s %s: ", Magenta("[?]"), label)
 	}
 
 	input, _ := reader.ReadString('\n')
@@ -84,19 +85,27 @@ func ask(label string, defaultVal string) string {
 }
 
 // General text input prompt.
-func Prompt(label string, defaultVal string) string {
-	return ask(label, defaultVal)
+func Prompt(defaultVal string, msg string, args ...interface{}) string {
+	return ask(defaultVal, msg, args...)
 }
 
-// Asks for a yes no input from the user.
-func Confirm(label string, defaultY bool) bool {
+// Asks for a yes/no input from the user.
+func Confirm(defaultY bool, msg string, args ...interface{}) bool {
 	suffix := "y/N"
 	if defaultY {
 		suffix = "Y/n"
 	}
 
-	res := strings.ToLower(ask(label, suffix))
+	// Format the base message first
+	label := fmt.Sprintf(msg, args...)
 
+	// Append the suffix manually so it looks like: "Message (y/N)"
+	promptMsg := fmt.Sprintf("%s (%s)", label, Cyan(suffix))
+
+	// Pass "" as defaultVal to ask() so it doesn't print the [brackets] twice.
+	res := strings.ToLower(ask("", "%s", promptMsg))
+
+	// Now this correctly catches the empty Enter press!
 	if res == "" {
 		return defaultY
 	}

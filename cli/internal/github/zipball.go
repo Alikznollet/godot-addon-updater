@@ -8,42 +8,47 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 // Downloads and extracts a Zipball to it's destination in res://addons/
 // Will return the folder name if the extraction succeeds.
 func DownloadAndExtract(zipUrl string) (string, error) {
-	fmt.Println("Downloading zip archive...")
-
 	// Download the zip.
 	resp, err := http.Get(zipUrl)
 	if err != nil {
-		return "", fmt.Errorf("Failed to download zip: %v", err)
+		return "", fmt.Errorf("failed to download zip: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// Create temp file to hold the zip.
 	tmpFile, err := os.CreateTemp("", "godot-addon-*.zip")
 	if err != nil {
-		return "", fmt.Errorf("Failed to create temp file: %v", err)
+		return "", fmt.Errorf("failed to create temp file: %v", err)
 	}
 	defer os.Remove(tmpFile.Name())
-	defer tmpFile.Close()
+
+	// Downloading loading bar.
+	bar := util.NewDownloadBar(resp.ContentLength, "Downloading archive")
 
 	// Stream the download into the temp file
-	_, err = io.Copy(tmpFile, resp.Body)
+	_, err = io.Copy(io.MultiWriter(tmpFile, bar), resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("Failed to write to temp file: %v", err)
+		return "", fmt.Errorf("failed to write to temp file: %v", err)
 	}
+
+	bar.Finish()
+	tmpFile.Close()
 
 	// Read the ZIP
 	zipReader, err := zip.OpenReader(tmpFile.Name())
 	if err != nil {
-		return "", fmt.Errorf("Failed to read zip file: %v", err)
+		return "", fmt.Errorf("failed to read zip file: %v", err)
 	}
 	defer zipReader.Close()
 
-	fmt.Println("Scouting Zip...")
+	util.Info("Scouting Zip...")
 
 	var discoveredFolderName string
 	var prefixToRemove string
@@ -71,18 +76,19 @@ func DownloadAndExtract(zipUrl string) (string, error) {
 	}
 
 	if discoveredFolderName == "" {
-		return "", fmt.Errorf("Could not find a valid 'addons/' folder inside the zip.")
+		return "", fmt.Errorf("could not find a valid 'addons/' folder inside zip")
 	}
 
-	fmt.Printf("Discovered addon: %s\n", discoveredFolderName)
-	fmt.Println("Extracting...")
+	util.Info("Discovered addon: %s", discoveredFolderName)
 
 	// Remove the old files.
 	targetDir := filepath.Join("addons", discoveredFolderName)
 	if _, err := os.Stat(targetDir); !os.IsNotExist(err) {
-		fmt.Printf("Removing old version...\n")
+		util.Warn("Removing old version...")
 		os.RemoveAll(targetDir)
 	}
+
+	extBar := util.NewItemBar(len(zipReader.File), "Extracting files")
 
 	// Extraction.
 	for _, file := range zipReader.File {
@@ -97,7 +103,7 @@ func DownloadAndExtract(zipUrl string) (string, error) {
 		// Check for vulnerabilities
 		cleanPath := filepath.Clean(targetPath)
 		if strings.HasPrefix(cleanPath, "..") {
-			return "", fmt.Errorf("Illegal file path detected: %s", cleanPath)
+			return "", fmt.Errorf("illegal file path detected: %s", cleanPath)
 		}
 
 		// Create directories or extract files
@@ -111,9 +117,13 @@ func DownloadAndExtract(zipUrl string) (string, error) {
 		if err := extractSingleFile(file, cleanPath); err != nil {
 			return "", err
 		}
+
+		extBar.Add(1)
 	}
 
-	fmt.Printf("Extracted to %s!\n", targetDir)
+	// Finish the progress bar.
+	extBar.Finish()
+	util.Succes("extracted to %s!", targetDir)
 
 	return discoveredFolderName, nil
 }

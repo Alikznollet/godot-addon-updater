@@ -52,6 +52,8 @@ func (cmd *SyncCmd) Run() error {
 
 	// Now we Prompt for unknowns.
 
+	unresolvedCount := 0
+
 	for _, folderName := range folderNames {
 		if _, exists := cmd.Manifest.Addons[folderName]; exists {
 			continue // Already tracked
@@ -61,6 +63,8 @@ func (cmd *SyncCmd) Run() error {
 		changed := cmd.handleUnknown(folderName)
 		if changed {
 			manifestChanged = true
+		} else {
+			unresolvedCount++
 		}
 	}
 
@@ -70,8 +74,16 @@ func (cmd *SyncCmd) Run() error {
 			return err
 		}
 		util.Success("Sync complete! '%s' has been updated.", manifest.ManifestName)
+
+		if unresolvedCount > 0 {
+			util.Warn("%d folder(s) still remain untracked.", unresolvedCount)
+		}
 	} else {
-		util.Success("Everything is already perfectly in sync!")
+		if unresolvedCount > 0 {
+			util.Warn("Sync finished. %d folder(s) still remain untracked.", unresolvedCount)
+		} else {
+			util.Success("Everything is already perfectly in sync!")
+		}
 	}
 
 	return nil
@@ -82,10 +94,15 @@ func (cmd *SyncCmd) Run() error {
 func (cmd *SyncCmd) handleUnknown(folderName string) bool {
 	util.Info("Found unknown addon folder: %s", util.Cyan(folderName))
 
+	fmt.Println()
+
 	// Print the menu cleanly.
-	fmt.Printf("  [%s] Link to a GitHub repository", util.Cyan("1"))
-	fmt.Printf("  [%s] Mark as Local (ignore in future syncs)", util.Cyan("2"))
-	fmt.Printf("  [%s] Skip for now", util.Cyan("3"))
+	util.Info("What do you want to do with the unknown folder?")
+	fmt.Printf("  [%s] Link to a GitHub repository\n", util.Cyan("1"))
+	fmt.Printf("  [%s] Mark as Local (ignore in future syncs)\n", util.Cyan("2"))
+	fmt.Printf("  [%s] Skip for now\n", util.Cyan("3"))
+
+	fmt.Println()
 
 	choice := util.Prompt("3", "Choice (1/2/3)")
 
@@ -122,10 +139,10 @@ func (cmd *SyncCmd) linkToGitHub(folderName string) bool {
 	// Ask for the specifics
 	var target string
 	if isBranch {
-		target = util.Prompt("main", "Enter branch name (default: main)")
+		target = util.Prompt("main", "Enter branch name")
 		util.Info("Verifying branch '%s'...", target)
 	} else {
-		target = util.Prompt("latest", "Enter release tag (default: latest)")
+		target = util.Prompt("latest", "Enter release tag")
 		util.Info("Verifying release '%s'...", target)
 	}
 

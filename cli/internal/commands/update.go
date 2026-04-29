@@ -3,8 +3,6 @@ package commands
 // TODO: Perform refactor!
 
 import (
-	"fmt"
-
 	"github.com/alikznollet/godot-wisp/cli/internal/github"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
@@ -21,76 +19,84 @@ type UpdateCmd struct {
 }
 
 func (cmd *UpdateCmd) Run() error {
-	var reposToGet []manifest.Addon
+	// Filter target repos
+	var targets []manifest.Addon
+
 	if len(cmd.Repos) == 0 {
-		reposToGet = make([]manifest.Addon, 0, len(cmd.Manifest.Addons))
 		for _, addon := range cmd.Manifest.Addons {
 			if !addon.Untracked {
-				reposToGet = append(reposToGet, addon)
+				targets = append(targets, addon)
 			}
 		}
 	} else {
-		reposToGet = make([]manifest.Addon, 0, len(cmd.Repos))
 		for _, repoName := range cmd.Repos {
 			_, addon, isTracked := cmd.Manifest.FindByRepo(repoName)
-			if isTracked {
-				reposToGet = append(reposToGet, addon)
+			if !isTracked {
+				util.Warn("Addon '%s' is not tracked by Wisp, skipping...", repoName)
+				continue
 			}
+			targets = append(targets, addon)
 		}
 	}
 
-	fmt.Printf("Attempting to update %d tracked addons.\n", len(reposToGet))
+	if len(targets) == 0 {
+		util.Info("No tracked addons found to update.")
+		return nil
+	}
+
+	util.Info("Checking %d addon(s) for updates...", len(targets))
+	updatedCount := 0
 
 	// Check and update repos that need it.
-	for _, addon := range reposToGet {
-		fmt.Printf("Attempting to update %s...\n", addon.Repo)
-
+	for _, addon := range targets {
 		isUpToDate, ref, err := cmd.Manifest.CheckAddon(addon.Repo)
 		if err != nil {
-			fmt.Printf("Error while checking %s: %v\n", addon.Repo, err)
+			util.Warn("Failed to check %s: %v", addon.Repo, err)
 			continue
 		}
 
-		// Only try to update if the addon is not up to date and ref is there.
-		if !isUpToDate && ref != nil {
-			fmt.Printf("Update found for %s -> %s.\n", addon.Repo, ref.GetVersion())
+		if isUpToDate || ref == nil {
+			util.Success("%s is up to date.", addon.Repo)
+			continue
+		}
 
-			// Only ask for confirm if yes is not passed.
-			if !cmd.Yes {
-				confirmationString := fmt.Sprintf("Do you want to download and apply updates for %s?", addon.Repo)
-				if !util.AskForConfirmation(confirmationString) {
-					fmt.Println("Update cancelled.")
-					continue
-				}
-			}
+		util.Info("Update found for %s (%s -> %s)", addon.Repo, addon.GetCurrentVersion(), ref.GetVersion())
 
-			fmt.Println("Applying updates...")
-			loc, err := github.DownloadAndExtract(ref.GetZipballUrl())
-			if err != nil {
-				fmt.Printf("Error downloading %s: %v\n", addon.Repo, err)
-				continue // Continue to the next update.
-			}
-
-			switch addon.Type {
-			case manifest.Release:
-				cmd.Manifest.AddRelease(loc, addon.Repo, ref.GetVersion())
-			case manifest.Branch:
-				cmd.Manifest.AddBranch(loc, addon.Repo, addon.Version, ref.GetVersion())
-			default:
+		// User confirmation
+		if !cmd.Yes {
+			if !util.Confirm(true, "Do you want to download and apply this update?") {
+				util.Info("Skipping %s...", addon.Repo)
 				continue
 			}
-		} else {
-			fmt.Printf("%s is up to date.\n", addon.Repo)
 		}
+
+		// Download and apply.
+		util.Info("Applying update...")
+		loc, err := github.DownloadAndExtract(ref.GetZipballUrl())
+		if err != nil {
+			util.Error("Failed to download %s: %v", addon.Repo, err)
+			continue
+		}
+
+		// Call the correct addition function.
+		if addon.Type == manifest.Release {
+			cmd.Manifest.AddRelease(loc, addon.Repo, ref.GetVersion())
+		} else {
+			cmd.Manifest.AddBranch(loc, addon.Repo, addon.GetCurrentBranch(), ref.GetVersion())
+		}
+
+		updatedCount++
 	}
 
-	// Make sure to save the manifest after all of this.
-	err := manifest.SaveManifest(cmd.Manifest)
-	if err != nil {
-		return err
+	// Only save when something was modified.
+	if updatedCount > 0 {
+		if err := manifest.SaveManifest(cmd.Manifest); err != nil {
+			return err
+		}
+		util.Success("Successfully updated %d addon(s)!", updatedCount)
+	} else {
+		util.Success("All checked addons are up to date.")
 	}
-
-	fmt.Println("Finished updating addons!")
 
 	return nil
 }

@@ -3,6 +3,7 @@ package util
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -67,8 +68,8 @@ func Fatal(msg string, args ...interface{}) {
 }
 
 // Print a list item formatted.
-func PrintListItem(name string, status string, details string) {
-	fmt.Printf("  %s %s\t%s %s\n",
+func PrintListItem(w io.Writer, name string, status string, details string) {
+	fmt.Fprintf(w, "  %s %s\t%s %s\n",
 		Cyan("•"),
 		name,
 		Yellow("["+status+"]"),

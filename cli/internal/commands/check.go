@@ -1,10 +1,10 @@
 package commands
 
-// TODO: Perform refactor!
-
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"text/tabwriter"
 
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
@@ -48,9 +48,12 @@ func (cmd *CheckCmd) Run() error {
 	}
 
 	util.Warn("Found %d available updates:", len(outdated))
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
 	for _, o := range outdated {
-		util.PrintListItem(o.Repo, "Update", fmt.Sprintf("%s -> %s", o.Current, o.Latest))
+		util.PrintListItem(w, o.Repo, "Update", fmt.Sprintf("%s -> %s", o.Current, o.Latest))
 	}
+	w.Flush()
 
 	return nil
 }

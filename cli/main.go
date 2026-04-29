@@ -41,6 +41,6 @@ func main() {
 	err := ctx.Run()
 
 	if err != nil {
-		util.Fatal("%v", err)
+		util.Fatal("A problem occurred: %v", err)
 	}
 }

@@ -20,22 +20,22 @@ var (
 
 // Prints a green success message
 func Success(msg string, args ...interface{}) {
-	fmt.Printf("%s %s\n", Green("✓"), fmt.Sprintf(msg, args...))
+	fmt.Printf("%s %s\n", Green("[✓]"), fmt.Sprintf(msg, args...))
 }
 
 // Prints a blue info message.
 func Info(msg string, args ...interface{}) {
-	fmt.Printf("%s %s\n", Cyan("🛈"), fmt.Sprintf(msg, args...))
+	fmt.Printf("%s %s\n", Cyan("[i]"), fmt.Sprintf(msg, args...))
 }
 
 // Prints a red error message.
 func Error(msg string, args ...interface{}) {
-	fmt.Printf("%s %s\n", Red("✖"), fmt.Sprintf(msg, args...))
+	fmt.Printf("%s %s\n", Red("[×]"), fmt.Sprintf(msg, args...))
 }
 
 // Prints a yellow warning message.
 func Warn(msg string, args ...interface{}) {
-	fmt.Printf("%s %s\n", Yellow("⚠"), fmt.Sprintf(msg, args...))
+	fmt.Printf("%s %s\n", Yellow("[!]"), fmt.Sprintf(msg, args...))
 }
 
 // Prints an error message and then exits the program.

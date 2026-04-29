@@ -19,7 +19,7 @@ var (
 )
 
 // Prints a green success message
-func Succes(msg string, args ...interface{}) {
+func Success(msg string, args ...interface{}) {
 	fmt.Printf("%s %s\n", Green("✓"), fmt.Sprintf(msg, args...))
 }
 

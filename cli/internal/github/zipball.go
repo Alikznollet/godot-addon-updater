@@ -123,7 +123,7 @@ func DownloadAndExtract(zipUrl string) (string, error) {
 
 	// Finish the progress bar.
 	extBar.Finish()
-	util.Succes("extracted to %s!", targetDir)
+	util.Success("extracted to %s!", targetDir)
 
 	return discoveredFolderName, nil
 }

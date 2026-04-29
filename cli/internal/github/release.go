@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 // The Tag name of a release and the url
@@ -15,6 +17,8 @@ type GitHubRelease struct {
 
 // Returns a GitHub Release.
 func GetRelease(owner string, repo string, version string) (*GitHubRelease, error) {
+	util.Info("fetching '%s' release info for %s/%s", version, owner, repo)
+
 	var url string
 	if version == "latest" {
 		url = fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/%s", owner, repo, version)
@@ -23,9 +27,8 @@ func GetRelease(owner string, repo string, version string) (*GitHubRelease, erro
 	}
 
 	resp, err := http.Get(url)
-
 	if err != nil {
-		return nil, fmt.Errorf("Failed to make request: %v", err)
+		return nil, fmt.Errorf("failed to fetch release info: %v", err)
 	}
 
 	defer resp.Body.Close()
@@ -37,8 +40,10 @@ func GetRelease(owner string, repo string, version string) (*GitHubRelease, erro
 	var release GitHubRelease
 	err = json.NewDecoder((resp.Body)).Decode(&release)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse JSON: %v", err)
+		return nil, fmt.Errorf("failed to parse JSON: %v", err)
 	}
+
+	util.Success("found '%s'", release.GetVersion())
 
 	return &release, nil
 }

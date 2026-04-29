@@ -10,6 +10,14 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
+// Global mute state.
+var isMuted = false
+
+// Mute UI completely.
+func MuteUI() {
+	isMuted = true
+}
+
 //
 // Functions that help print output prettier.
 //
@@ -24,11 +32,17 @@ var (
 
 // Prints a green success message
 func Success(msg string, args ...interface{}) {
+	if isMuted {
+		return
+	}
 	fmt.Printf("%s %s\n", Green("[✓]"), fmt.Sprintf(msg, args...))
 }
 
 // Prints a blue info message.
 func Info(msg string, args ...interface{}) {
+	if isMuted {
+		return
+	}
 	fmt.Printf("%s %s\n", Cyan("[i]"), fmt.Sprintf(msg, args...))
 }
 
@@ -39,6 +53,9 @@ func Error(msg string, args ...interface{}) {
 
 // Prints a yellow warning message.
 func Warn(msg string, args ...interface{}) {
+	if isMuted {
+		return
+	}
 	fmt.Printf("%s %s\n", Yellow("[!]"), fmt.Sprintf(msg, args...))
 }
 

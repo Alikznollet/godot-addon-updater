@@ -36,6 +36,22 @@ type Addon struct {
 	Commit    string    `json:"commit,omitempty"` // Only used when tracking a branch.
 }
 
+// Returns the current version of the addon.
+func (a *Addon) GetCurrentVersion() string {
+	if a.Type == Release {
+		return a.Version
+	}
+	return a.Commit
+}
+
+// Returns the current branch of the addon. "" if a release.
+func (a *Addon) GetCurrentBranch() string {
+	if a.Type == Release {
+		return ""
+	}
+	return a.Version
+}
+
 // The complete list of addons mapping their repo names
 // to their respective Addon structs.
 type AddonManifest struct {

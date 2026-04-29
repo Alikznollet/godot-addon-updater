@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 // Name of the manifest file.
@@ -116,4 +118,34 @@ func deleteAddonFolder(folderName string) error {
 	}
 
 	return nil
+}
+
+// Fetches outdated addons from the addons.json file.
+func FetchOutdatedAddons(m *AddonManifest) ([]OutdatedAddon, error) {
+	var outdated []OutdatedAddon
+
+	util.Info("Checking for updates...")
+
+	for folderName, addon := range m.Addons {
+		isUpToDate, ref, err := m.CheckAddon(addon.Repo)
+		if err != nil {
+			util.Warn("Failed to check %s: %v", addon.Repo, err)
+			continue
+		}
+
+		if !isUpToDate && ref != nil {
+			util.Info("Update found for %s (%s -> %s)", addon.Repo, addon.GetCurrentVersion(), ref.GetVersion())
+
+			outdated = append(outdated, OutdatedAddon{
+				Folder:  folderName,
+				Repo:    addon.Repo,
+				Current: addon.GetCurrentVersion(),
+				Latest:  ref.GetVersion(),
+				Type:    addon.Type,
+				Branch:  addon.GetCurrentBranch(),
+			})
+		}
+	}
+
+	return outdated, nil
 }

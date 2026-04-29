@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
+	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 //
@@ -19,37 +20,14 @@ type CheckCmd struct {
 }
 
 func (cmd *CheckCmd) Run() error {
-	fmt.Println("Checking for updates...")
+	if cmd.Json {
+		util.MuteUI() // Mute the UI if we ask for JSON.
+	}
 
-	var outdated []manifest.OutdatedAddon
-
-	for folderName, addon := range cmd.Manifest.Addons {
-		isUpToDate, ref, err := cmd.Manifest.CheckAddon(addon.Repo)
-		if err != nil {
-			fmt.Printf("Something went wrong while checking %s, moving to next addon...: %v\n", addon.Repo, err)
-			continue
-		}
-		if !isUpToDate && ref != nil {
-			fmt.Printf("A newer version of %s is available (%s -> %s).\n", addon.Repo, addon.Version, ref.GetVersion())
-
-			// We need to HACK a bit here...
-			currentVersion := addon.Commit
-			currentBranch := addon.Version
-			if addon.Type == manifest.Release {
-				currentVersion = addon.Version
-				currentBranch = ""
-			}
-
-			// Add an OutdatedAddon object to the list for later.
-			outdated = append(outdated, manifest.OutdatedAddon{
-				Folder:  folderName,
-				Repo:    addon.Repo,
-				Current: currentVersion,
-				Latest:  ref.GetVersion(),
-				Type:    addon.Type,
-				Branch:  currentBranch,
-			})
-		}
+	// Fetch the outdated addons.
+	outdated, err := manifest.FetchOutdatedAddons(cmd.Manifest)
+	if err != nil {
+		return err
 	}
 
 	// Handle output based on request.
@@ -63,14 +41,15 @@ func (cmd *CheckCmd) Run() error {
 		return nil
 	}
 
-	// Now for non json
+	// Standard CLI
 	if len(outdated) == 0 {
-		fmt.Println("All addons are up to date!")
+		util.Success("All addons are up to date!")
 		return nil
 	}
 
+	util.Warn("Found %d available updates:", len(outdated))
 	for _, o := range outdated {
-		fmt.Printf("%s can be updated from %s to %s.", o.Repo, o.Current, o.Latest)
+		util.PrintListItem(o.Repo, "Update", fmt.Sprintf("%s -> %s", o.Current, o.Latest))
 	}
 
 	return nil

@@ -16,9 +16,9 @@ import (
 
 type InstallCmd struct {
 	RequiresManifestCmd
-	Repo    string `arg:"" name:"repo" help:"The GitHub repository (e.g. ramokz/phantom-camera)."`
-	Version string `short:"v" xor:"target" help:"Specific version tag to install (e.g. v1.0.0)."`
-	Branch  string `short:"b" xor:"target" help:"Branch to track instead of tracking releases (e.g. main)."`
+	Repo   string `arg:"" name:"repo" help:"The GitHub repository (e.g. ramokz/phantom-camera)."`
+	Tag    string `short:"t" xor:"target" help:"Specific version tag to install (e.g. v1.0.0)."`
+	Branch string `short:"b" xor:"target" help:"Branch to track instead of tracking releases (e.g. main)."`
 }
 
 func (cmd *InstallCmd) Run() error {
@@ -34,7 +34,7 @@ func (cmd *InstallCmd) Run() error {
 	if cmd.Branch != "" {
 		updated, err = cmd.installBranch(owner, repo)
 	} else {
-		version := cmd.Version
+		version := cmd.Tag
 		if version == "" {
 			version = "latest"
 		}

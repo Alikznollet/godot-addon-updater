@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/alikznollet/godot-wisp/cli/internal/github"
+	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 // Enum used as type of Addon.
@@ -72,13 +73,13 @@ func (m *AddonManifest) AddRelease(folder string, repo string, version string) {
 func (m *AddonManifest) RemoveAddon(repo string, keep bool) error {
 	folderName, _, isTracked := m.FindByRepo(repo)
 	if !isTracked {
-		fmt.Printf("%s is not actively being tracked in this project.", repo)
+		// Silently exit if it wasn't installed in the first place.
 		return nil
 	}
 
 	if !keep {
 		// Removes all files related to this addon.
-		fmt.Printf("Removing all files associated to %s\n", repo)
+		util.Warn("removing all files associated to %s", repo)
 		err := deleteAddonFolder(folderName)
 		if err != nil {
 			return err
@@ -105,13 +106,13 @@ func (m *AddonManifest) CheckAddon(repo string) (bool, github.AddonRef, error) {
 	_, addon, isTracked := m.FindByRepo(repo)
 
 	if !isTracked {
-		return false, nil, fmt.Errorf("%s is not tracked in the current project.", repo)
+		return false, nil, fmt.Errorf("%s is not tracked in the current project", repo)
 	}
 
 	// Split the repo name
 	parts := strings.Split(repo, "/")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return false, nil, fmt.Errorf("Invalid repository format. Must be 'owner/repo'.")
+		return false, nil, fmt.Errorf("invalid repository format. Must be 'owner/repo'")
 	}
 
 	o := parts[0]

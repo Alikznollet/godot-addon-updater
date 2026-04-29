@@ -41,13 +41,13 @@ func SaveManifest(manifest AddonManifest) error {
 	// Serialize the object into the JSON format.
 	jsonData, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
-		return fmt.Errorf("Failed to encode JSON: %w", err)
+		return fmt.Errorf("failed to encode JSON: %w", err)
 	}
 
 	// Write the manifest to the file.
 	err = os.WriteFile("addons.json", jsonData, 0644)
 	if err != nil {
-		return fmt.Errorf("Failed to write addons.json to disk: %w", err)
+		return fmt.Errorf("failed to write addons.json to disk: %w", err)
 	}
 
 	return nil
@@ -64,13 +64,13 @@ func LoadManifest() (AddonManifest, error) {
 		if os.IsNotExist(err) {
 			return manifest, errors.New("addons.json not found. Run 'wisp init' first.")
 		}
-		return manifest, fmt.Errorf("Failed to read addons.json: %w", err)
+		return manifest, fmt.Errorf("failed to read addons.json: %w", err)
 	}
 
 	// Parse the raw JSON to an AddonManifest object.
 	err = json.Unmarshal(data, &manifest)
 	if err != nil {
-		return manifest, fmt.Errorf("Failed to parse addons.json: %w", err)
+		return manifest, fmt.Errorf("failed to parse addons.json: %w", err)
 	}
 
 	// If no addons are registered .Addons will come back as nil.
@@ -88,13 +88,13 @@ func deleteAddonFolder(folderName string) error {
 	// Check for any malicious paths.
 	cleanPath := filepath.Clean(folderName)
 	if strings.Contains(cleanPath, "..") || strings.Contains(cleanPath, "/") || strings.Contains(cleanPath, "\\") {
-		return fmt.Errorf("Invalid folder name: %s", cleanPath)
+		return fmt.Errorf("invalid folder name: %s", cleanPath)
 	}
 
 	// Actually remove the folder.
 	targetDir := filepath.Join("addons", cleanPath)
 	if err := os.RemoveAll(targetDir); err != nil {
-		return fmt.Errorf("Failed to delete folder %s: %v", targetDir, err)
+		return fmt.Errorf("failed to delete folder %s: %v", targetDir, err)
 	}
 
 	return nil

@@ -1,9 +1,6 @@
 package commands
 
-// TODO: Perform refactor!
-
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,7 +20,6 @@ type SyncCmd struct {
 }
 
 func (cmd *SyncCmd) Run() error {
-	// Also grab all of the folder names from addons.
 	folderNames, err := manifest.GetAddonFolderContents()
 	if err != nil {
 		return err
@@ -31,7 +27,7 @@ func (cmd *SyncCmd) Run() error {
 
 	// If no addons print a message and exit.
 	if len(folderNames) == 0 {
-		fmt.Println("There are currently no addons installed in this project.")
+		util.Info("There are currently no addons installed or tracked in this project.")
 		return nil
 	}
 
@@ -48,7 +44,7 @@ func (cmd *SyncCmd) Run() error {
 	// If a tracked addon is no longer in the folders remove it from addons.json
 	for folderName := range cmd.Manifest.Addons {
 		if !physicalFolders[folderName] {
-			fmt.Printf("Folder `%s` no longer exists. Removing the associated addon from addons.json.\n", folderName)
+			util.Warn("Folder `%s` no longer exists. Removing from tracking.", folderName)
 			delete(cmd.Manifest.Addons, folderName)
 			manifestChanged = true
 		}
@@ -56,128 +52,114 @@ func (cmd *SyncCmd) Run() error {
 
 	// Now we Prompt for unknowns.
 
-	scanner := bufio.NewScanner(os.Stdin)
-
 	for _, folderName := range folderNames {
 		if _, exists := cmd.Manifest.Addons[folderName]; exists {
-			continue // If it exists in the manifest then we skip no matter what.
+			continue // Already tracked
 		}
 
-		fmt.Printf("Found unknown addon folder: %s\n", folderName)
-		fmt.Println("  [1] Link to a GitHub repository")
-		fmt.Println("  [2] Mark as Local (ignore in future syncs)")
-		fmt.Println("  [3] Skip for now")
-
-		choice := util.AskInput("Choice (1/2/3): ", scanner)
-
-		switch choice {
-		case "3":
-			fmt.Println("Skipping...")
-		case "2":
-			// We just mark it as untracked and leave it.
-			cmd.Manifest.Addons[folderName] = manifest.Addon{Untracked: true}
-			fmt.Printf("Marked '%s' as a local/untracked addon.\n", folderName)
+		// Delegates all ui to helpers
+		changed := cmd.handleUnknown(folderName)
+		if changed {
 			manifestChanged = true
-			continue
-		case "1":
-			// Get the repo
-			repo := util.AskInput("Enter a GitHub repository (e.g ramokz/phantom-camera): ", scanner)
-			parts := strings.Split(repo, "/")
-			if len(parts) != 2 {
-				fmt.Println("Invalid format. Skipping...")
-				continue
-			}
-
-			// Get the type of tracking.
-			typeChoice := util.AskInput("Do you want to track [1] Releases or [2] a specific Branch? (1/2): ", scanner)
-
-			switch typeChoice {
-			case "1":
-				// If we are trying to link a release
-				target := util.AskInput("Enter release tag (e.g., v1.0.0) or type 'latest': ", scanner)
-				fmt.Printf("Verifying release '%s'...\n", target)
-
-				ref, err := github.GetAddonRef(parts[0], parts[1], target, false)
-				if err != nil {
-					fmt.Printf("Could not verify release: %v\n", err)
-					continue
-				}
-
-				// Check if the user wants to perform a fresh install.
-				install := util.AskForConfirmation("Do you want to fresh install the files?")
-				if install {
-
-					// Remove the original file path (in case it doesn't match the downloaded one.)
-					addonPath := filepath.Join("addons", folderName)
-					if err := os.RemoveAll(addonPath); err != nil {
-						fmt.Printf("Could not remove old folder before install: %v\n", err)
-						continue
-					}
-
-					loc, err := github.DownloadAndExtract(ref.GetZipballUrl())
-					if err != nil {
-						fmt.Printf("Could not perform fresh install: %v", err)
-						continue
-					}
-					folderName = loc
-				}
-
-				// Add the release to the manifest.
-				cmd.Manifest.AddRelease(folderName, repo, ref.GetVersion())
-				fmt.Printf("Linked '%s' to release '%s'.\n", folderName, ref.GetVersion())
-				manifestChanged = true
-			case "2":
-				// If we are trying to link a branch.
-				branchName := util.AskInput("Enter branch name (e.g., main, develop): ", scanner)
-				fmt.Printf("Verifying branch '%s'...\n", branchName)
-
-				ref, err := github.GetAddonRef(parts[0], parts[1], branchName, true)
-				if err != nil {
-					fmt.Printf("Could not verify branch: %v\n", err)
-					continue
-				}
-
-				// Check if the user wants to perform a fresh install.
-				install := util.AskForConfirmation("Do you want to fresh install the files?")
-				if install {
-
-					// Remove the original file path (in case it doesn't match the downloaded one.)
-					addonPath := filepath.Join("addons", folderName)
-					if err := os.RemoveAll(addonPath); err != nil {
-						fmt.Printf("Could not remove old folder before install: %v\n", err)
-						continue
-					}
-
-					loc, err := github.DownloadAndExtract(ref.GetZipballUrl())
-					if err != nil {
-						fmt.Printf("Could not perform fresh install: %v", err)
-						continue
-					}
-					folderName = loc
-				}
-
-				// Add the branch to the manifest.
-				cmd.Manifest.AddBranch(folderName, repo, branchName, ref.GetVersion())
-				fmt.Printf("Linked '%s' to branch '%s'.\n", folderName, branchName)
-				manifestChanged = true
-			default:
-				fmt.Println("Invalid choice. Skipping...")
-			}
-		default:
-			fmt.Println("Invalid choice. Skipping...")
 		}
 	}
 
-	// Save changes to the manifest.
+	// Save changes to the manifest if a change happened
 	if manifestChanged {
-		err := manifest.SaveManifest(cmd.Manifest)
-		if err != nil {
+		if err := manifest.SaveManifest(cmd.Manifest); err != nil {
 			return err
 		}
-		fmt.Println("Sync complete! Addons.json updated.")
+		util.Success("Sync complete! '%s' has been updated.", manifest.ManifestName)
 	} else {
-		fmt.Println("Everything is already perfectly in sync!")
+		util.Success("Everything is already perfectly in sync!")
 	}
 
 	return nil
+}
+
+// Displays the menu for an unknown folder
+// Returns true if the manifest was modified.
+func (cmd *SyncCmd) handleUnknown(folderName string) bool {
+	util.Info("Found unknown addon folder: %s", util.Cyan(folderName))
+
+	// Print the menu cleanly.
+	fmt.Printf("  [%s] Link to a GitHub repository", util.Cyan("1"))
+	fmt.Printf("  [%s] Mark as Local (ignore in future syncs)", util.Cyan("2"))
+	fmt.Printf("  [%s] Skip for now", util.Cyan("3"))
+
+	choice := util.Prompt("3", "Choice (1/2/3)")
+
+	switch choice {
+	case "3":
+		util.Info("Skipping...")
+		return false
+	case "2":
+		cmd.Manifest.Addons[folderName] = manifest.Addon{Untracked: true}
+		util.Success("Marked '%s' as a local/untracked addon.", folderName)
+		return true
+	case "1":
+		return cmd.linkToGitHub(folderName)
+	default:
+		util.Warn("Invalid choice. Skipping...")
+		return false
+	}
+}
+
+// Displays the menu for linking to github and handles the fresh installation
+// Returns true if the manifest was modified.
+func (cmd *SyncCmd) linkToGitHub(folderName string) bool {
+	repo := util.Prompt("", "Enter GitHub repository (e.g. ramokz/phantom-camera)")
+	parts := strings.Split(repo, "/")
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		util.Warn("Invalid format. Must be 'owner/repo'. Skipping...")
+		return false
+	}
+
+	// Ask for the tracking type
+	typeChoice := util.Prompt("1", "Track [%s] Releases or [%s] a specific Branch? (1/2)", util.Cyan("1"), util.Cyan("2"))
+	isBranch := (typeChoice == "2")
+
+	// Ask for the specifics
+	var target string
+	if isBranch {
+		target = util.Prompt("main", "Enter branch name (default: main)")
+		util.Info("Verifying branch '%s'...", target)
+	} else {
+		target = util.Prompt("latest", "Enter release tag (default: latest)")
+		util.Info("Verifying release '%s'...", target)
+	}
+
+	// Fetch from GH
+	ref, err := github.GetAddonRef(parts[0], parts[1], target, isBranch)
+	if err != nil {
+		util.Error("Could not verify with GitHub: %v", err)
+		return false
+	}
+
+	// Fresh install logic
+	if util.Confirm(false, "Fresh install files from GitHub? (Deletes current folder)") {
+		addonPath := filepath.Join("addons", folderName)
+		if err := os.RemoveAll(addonPath); err != nil {
+			util.Error("Could not remove old folder: %v", err)
+			return false
+		}
+
+		loc, err := github.DownloadAndExtract(ref.GetZipballUrl())
+		if err != nil {
+			util.Error("Could not perform fresh install: %v", err)
+			return false
+		}
+		folderName = loc // Update folder	name to the newly extracted one.
+	}
+
+	// Map it to a manifest
+	if isBranch {
+		cmd.Manifest.AddBranch(folderName, repo, target, ref.GetVersion())
+		util.Success("Linked '%s' to branch '%s'!", folderName, target)
+	} else {
+		cmd.Manifest.AddRelease(folderName, repo, ref.GetVersion())
+		util.Success("Linked '%s' to release '%s'!", folderName, ref.GetVersion())
+	}
+
+	return true
 }

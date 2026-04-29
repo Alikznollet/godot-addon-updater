@@ -1,7 +1,5 @@
 package commands
 
-// TODO: Perform refactor!
-
 import (
 	"github.com/alikznollet/godot-wisp/cli/internal/github"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"

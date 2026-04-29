@@ -1,5 +1,7 @@
 package commands
 
+// TODO: Perform refactor!
+
 import (
 	"fmt"
 

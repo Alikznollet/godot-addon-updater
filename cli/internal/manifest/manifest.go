@@ -79,7 +79,7 @@ func (m *AddonManifest) RemoveAddon(repo string, keep bool) error {
 
 	if !keep {
 		// Removes all files related to this addon.
-		util.Warn("removing all files associated to %s", repo)
+		util.Warn("Removing all files associated to %s", repo)
 		err := deleteAddonFolder(folderName)
 		if err != nil {
 			return err

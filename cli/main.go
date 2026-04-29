@@ -6,7 +6,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -31,33 +30,20 @@ func (cmd *InitCmd) Run() error {
 		return err
 	}
 
-	fmt.Println("Initializing addons.json...")
-	fmt.Printf("Force Overwrite: %v\n", cmd.Force)
+	util.Info("Initializing '%s'...", manifest.ManifestName)
 
-	if _, err := os.Stat("addons.json"); err == nil {
-		if !cmd.Force {
-			return errors.New("addons.json already exists. Use --force to overwrite.")
-		}
-		fmt.Println("Overwriting existing addons.json...")
-	} else if !os.IsNotExist(err) {
-		return err
-	}
-
-	// Create and save an empty manifest.
-	m := manifest.AddonManifest{
-		Addons: make(map[string]manifest.Addon),
-	}
-	err := manifest.SaveManifest(m)
-
+	// Initialize the manifest.
+	err := manifest.InitManifest(cmd.Force)
 	if err != nil {
 		return err
 	}
 
+	// Grab the project path
 	path, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Initialized addons.json file at %s\n", path)
+	util.Success("Initialized '%s' for project %s\n", manifest.ManifestName, path)
 
 	return nil
 }
@@ -614,5 +600,6 @@ func main() {
 	)
 
 	err := ctx.Run()
-	ctx.FatalIfErrorf(err)
+	util.Fatal("%v", err)
+	//ctx.FatalIfErrorf(err)
 }

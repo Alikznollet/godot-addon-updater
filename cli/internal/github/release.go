@@ -17,7 +17,7 @@ type GitHubRelease struct {
 
 // Returns a GitHub Release.
 func GetRelease(owner string, repo string, version string) (*GitHubRelease, error) {
-	util.Info("fetching '%s' release info for %s/%s", version, owner, repo)
+	util.Info("Fetching '%s' release info for %s/%s...", version, owner, repo)
 
 	var url string
 	if version == "latest" {
@@ -43,7 +43,7 @@ func GetRelease(owner string, repo string, version string) (*GitHubRelease, erro
 		return nil, fmt.Errorf("failed to parse JSON: %v", err)
 	}
 
-	util.Success("found '%s'", release.GetVersion())
+	util.Success("Found '%s'", release.GetVersion())
 
 	return &release, nil
 }

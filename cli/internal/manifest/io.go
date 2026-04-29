@@ -4,12 +4,14 @@ package manifest
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+// Name of the manifest file.
+const ManifestName = "addons.json"
 
 // Returns a list of all folder names inside of res://addons
 func GetAddonFolderContents() ([]string, error) {
@@ -36,6 +38,22 @@ func GetAddonFolderContents() ([]string, error) {
 	return folderNames, nil
 }
 
+// Initialize a new manifest or return an error message if it fails.
+func InitManifest(force bool) error {
+	if _, err := os.Stat(ManifestName); err == nil {
+		if !force {
+			return fmt.Errorf("'%s' already exists, use --force to overwrite", ManifestName)
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	m := AddonManifest{
+		Addons: make(map[string]Addon),
+	}
+	return SaveManifest(m)
+}
+
 // Saves an AddonManifest object to addons.json.
 func SaveManifest(manifest AddonManifest) error {
 	// Serialize the object into the JSON format.
@@ -45,9 +63,9 @@ func SaveManifest(manifest AddonManifest) error {
 	}
 
 	// Write the manifest to the file.
-	err = os.WriteFile("addons.json", jsonData, 0644)
+	err = os.WriteFile(ManifestName, jsonData, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to write addons.json to disk: %w", err)
+		return fmt.Errorf("failed to write '%s' to disk: %w", ManifestName, err)
 	}
 
 	return nil
@@ -58,19 +76,19 @@ func LoadManifest() (AddonManifest, error) {
 	var manifest AddonManifest
 
 	// Read the entire file.
-	data, err := os.ReadFile("addons.json")
+	data, err := os.ReadFile(ManifestName)
 	if err != nil {
 		// Return a clear error if the file doesn't exist
 		if os.IsNotExist(err) {
-			return manifest, errors.New("addons.json not found. Run 'wisp init' first.")
+			return manifest, fmt.Errorf("'%s' not found. Run 'wisp init' first.", ManifestName)
 		}
-		return manifest, fmt.Errorf("failed to read addons.json: %w", err)
+		return manifest, fmt.Errorf("failed to read '%s': %w", ManifestName, err)
 	}
 
 	// Parse the raw JSON to an AddonManifest object.
 	err = json.Unmarshal(data, &manifest)
 	if err != nil {
-		return manifest, fmt.Errorf("failed to parse addons.json: %w", err)
+		return manifest, fmt.Errorf("failed to parse '%s': %w", ManifestName, err)
 	}
 
 	// If no addons are registered .Addons will come back as nil.

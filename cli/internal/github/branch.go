@@ -23,7 +23,7 @@ type GitHubCommit struct {
 
 // Fetches the latest commit from the branch specified from the repo specified.
 func GetBranch(owner string, repo string, branch string) (*GitHubBranch, error) {
-	util.Info("fetching latest '%s' branch info for %s/%s", branch, owner, repo)
+	util.Info("Fetching latest '%s' branch info for %s/%s...", branch, owner, repo)
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s", owner, repo, branch)
 
@@ -56,7 +56,7 @@ func GetBranch(owner string, repo string, branch string) (*GitHubBranch, error) 
 	branchData.owner = owner
 	branchData.repo = repo
 
-	util.Success("found '%s' on branch '%s'", branchData.GetVersion(), branch)
+	util.Success("Found '%s' on branch '%s'", branchData.GetVersion(), branch)
 
 	return &branchData, nil
 }

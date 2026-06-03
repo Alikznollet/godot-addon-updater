@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/github"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
@@ -147,7 +148,8 @@ func (cmd *SyncCmd) linkToGitHub(folderName string) bool {
 	}
 
 	// Fetch from GH
-	ref, err := github.GetAddonRef(parts[0], parts[1], target, isBranch)
+	// TODO: Fix
+	ref, err := github.GetAddonRef(git.RepoInfo{}, target, isBranch)
 	if err != nil {
 		util.Error("Could not verify with GitHub: %v", err)
 		return false
@@ -161,7 +163,8 @@ func (cmd *SyncCmd) linkToGitHub(folderName string) bool {
 			return false
 		}
 
-		loc, err := github.DownloadAndExtract(ref.GetZipballUrl())
+		// TODO: Fix url
+		loc, err := git.GitDownload("", ref.GetVersion())
 		if err != nil {
 			util.Error("Could not perform fresh install: %v", err)
 			return false
@@ -170,11 +173,12 @@ func (cmd *SyncCmd) linkToGitHub(folderName string) bool {
 	}
 
 	// Map it to a manifest
+	// TODO: Fix both
 	if isBranch {
-		cmd.Manifest.AddBranch(folderName, repo, target, ref.GetVersion())
+		cmd.Manifest.AddBranch(folderName, git.RepoInfo{}, target, ref.GetVersion())
 		util.Success("Linked '%s' to branch '%s'!", folderName, target)
 	} else {
-		cmd.Manifest.AddRelease(folderName, repo, ref.GetVersion())
+		cmd.Manifest.AddRelease(folderName, git.RepoInfo{}, ref.GetVersion())
 		util.Success("Linked '%s' to release '%s'!", folderName, ref.GetVersion())
 	}
 

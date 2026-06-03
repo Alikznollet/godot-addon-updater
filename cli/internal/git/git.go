@@ -55,10 +55,10 @@ func GetLatestCommitForBranch(repoUrl string, branch string) string {
 	return ""
 }
 
-func GitDownload(repoUrl string, version string) error {
+func GitDownload(repoUrl string, version string) (string, error) {
 	tempDir, err := os.MkdirTemp("", "wisp-clone-*")
 	if err != nil {
-		return fmt.Errorf("failed to create temp dir: %v", err)
+		return "", fmt.Errorf("failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tempDir)
 
@@ -80,7 +80,7 @@ func GitDownload(repoUrl string, version string) error {
 	cloneCmd.Stderr = os.Stderr
 
 	if err := cloneCmd.Run(); err != nil {
-		return fmt.Errorf("git clone failed: %v", err)
+		return "", fmt.Errorf("git clone failed: %v", err)
 	}
 
 	// We have to look for the specific addons folder first.
@@ -89,22 +89,42 @@ func GitDownload(repoUrl string, version string) error {
 
 	output, err := lsCmd.Output()
 	if err != nil {
-		return fmt.Errorf("failed to scan repository structure: %v", err)
+		return "", fmt.Errorf("failed to scan repository structure: %v", err)
 	}
 
 	// Look for any path that ends or is addons.
 	var targetAddonsPath string
-	lines := strings.Split(string(output), "\n")
+	lines := strings.SplitSeq(string(output), "\n")
 
-	for _, line := range lines {
-		if line == "addons" || strings.HasSuffix(line, "/addons") {
-			targetAddonsPath = line
+	for rawLine := range lines {
+		line := strings.TrimSpace(rawLine)
+
+		if line == "" {
+			continue
+		}
+
+		// Work with case-insensitive string
+		lowerLine := strings.ToLower(line)
+
+		// The addons folder is at the absolute root (e.g., "addons/plugin/script.gd")
+		if strings.HasPrefix(lowerLine, "addons/") {
+			// The original casing for root is usually just "addons", but let's take exactly what's there
+			targetAddonsPath = line[:6] // "addons" is 6 characters
+			break
+		}
+
+		// The addons folder is nested (e.g., "example_project/addons/plugin/script.gd")
+		idx := strings.Index(lowerLine, "/addons/")
+		if idx != -1 {
+			// We slice the string to grab everything up to the end of the word "addons"
+			// len("/addons") is 7. This preserves the exact casing of the original path!
+			targetAddonsPath = line[:idx+7]
 			break
 		}
 	}
 
 	if targetAddonsPath == "" {
-		return fmt.Errorf("could not find an 'addons' folder anywhere in the repository")
+		return "", fmt.Errorf("could not find an 'addons' folder anywhere in the repository")
 	}
 
 	util.Info("Found 'addons' folder at: %s\n", targetAddonsPath)
@@ -114,7 +134,7 @@ func GitDownload(repoUrl string, version string) error {
 	sparseCmd.Dir = tempDir
 
 	if err := sparseCmd.Run(); err != nil {
-		return fmt.Errorf("git sparse-checkout failed: %v", err)
+		return "", fmt.Errorf("git sparse-checkout failed: %v", err)
 	}
 
 	sourceAddonsPath := filepath.Join(tempDir, targetAddonsPath)
@@ -123,11 +143,11 @@ func GitDownload(repoUrl string, version string) error {
 	// We know the addons path exists from the sparse-checkout check so we can just copy
 	util.Info("Moving addon into you Godot project...")
 
-	err = util.CopyDir(sourceAddonsPath, destAddonsPath)
+	loc, err := util.CopyDir(sourceAddonsPath, destAddonsPath)
 	if err != nil {
-		return fmt.Errorf("failed to copy addons folder: %v", err)
+		return "", fmt.Errorf("failed to copy addons folder: %v", err)
 	}
 
 	util.Success("Successfully downloaded addon!")
-	return nil
+	return loc, nil
 }

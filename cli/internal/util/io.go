@@ -6,9 +6,12 @@ import (
 	"path/filepath"
 )
 
-// Recursively copies a directory tree from src to dst.
-func CopyDir(src string, dst string) error {
-	return filepath.WalkDir(src, func(path string, d os.DirEntry, err error) error {
+// CopyDir recursively copies a directory tree from src to dst.
+// It returns the path to the first top-level directory copied (the addon folder itself).
+func CopyDir(src string, dst string) (string, error) {
+	var copiedAddonPath string
+
+	err := filepath.WalkDir(src, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -19,8 +22,19 @@ func CopyDir(src string, dst string) error {
 			return err
 		}
 
+		// Skip the root source directory itself (we don't want to copy "addons" into "addons")
+		if relPath == "." {
+			return nil
+		}
+
 		// Determine the destination path for this specific item
 		targetPath := filepath.Join(dst, relPath)
+
+		// If the relative path has no parent directory (meaning it's a direct child of src)
+		// and it is a directory, this is our actual addon folder (e.g., "my_plugin").
+		if copiedAddonPath == "" && d.IsDir() && filepath.Dir(relPath) == "." {
+			copiedAddonPath = relPath
+		}
 
 		if d.IsDir() {
 			// Get the permissions of the source directory
@@ -35,9 +49,15 @@ func CopyDir(src string, dst string) error {
 		// If it's a file, copy its contents
 		return copyFile(path, targetPath)
 	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return copiedAddonPath, nil
 }
 
-// Copies a single file from src to dst, preserving permissions.
+// copyFile remains exactly the same as your code...
 func copyFile(src, dst string) error {
 	srcFile, err := os.Open(src)
 	if err != nil {
@@ -45,24 +65,20 @@ func copyFile(src, dst string) error {
 	}
 	defer srcFile.Close()
 
-	// Ensure the parent directory exists just in case
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return err
 	}
 
-	// Create or truncate the destination file
 	dstFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
 	defer dstFile.Close()
 
-	// Copy the bytes
 	if _, err = io.Copy(dstFile, srcFile); err != nil {
 		return err
 	}
 
-	// Sync to disk and match permissions
 	srcInfo, err := os.Stat(src)
 	if err != nil {
 		return err

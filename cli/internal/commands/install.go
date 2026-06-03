@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"fmt"
-	"strings"
-
+	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/github"
 	"github.com/alikznollet/godot-wisp/cli/internal/godot"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
@@ -16,29 +14,27 @@ import (
 
 type InstallCmd struct {
 	RequiresManifestCmd
-	Repo   string `arg:"" name:"repo" help:"The GitHub repository (e.g. ramokz/phantom-camera)."`
+	Repo   string `arg:"" name:"repo" help:"The repository formatted as a url or just the owner and repo name (e.g. ramokz/phantom-camera or https://github.com/ramokz/phantom-camera)."`
 	Tag    string `short:"t" xor:"target" help:"Specific version tag to install (e.g. v1.0.0)."`
 	Branch string `short:"b" xor:"target" help:"Branch to track instead of tracking releases (e.g. main)."`
 }
 
 func (cmd *InstallCmd) Run() error {
 	// Split the repo name
-	parts := strings.Split(cmd.Repo, "/")
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return fmt.Errorf("invalid repository format. Must be 'owner/repo'")
+	repoInfo, err := git.ParseRepoString(cmd.Repo)
+	if err != nil {
+		return err
 	}
-	owner, repo := parts[0], parts[1]
 
-	var err error
 	var updated bool
 	if cmd.Branch != "" {
-		updated, err = cmd.installBranch(owner, repo)
+		updated, err = cmd.installBranch(repoInfo)
 	} else {
 		version := cmd.Tag
 		if version == "" {
 			version = "latest"
 		}
-		updated, err = cmd.installRelease(owner, repo, version)
+		updated, err = cmd.installRelease(repoInfo, version)
 	}
 
 	if err != nil {
@@ -49,7 +45,7 @@ func (cmd *InstallCmd) Run() error {
 	if updated {
 		folderName, _, _ := cmd.Manifest.FindByRepo(cmd.Repo)
 
-		if util.Confirm(false, "Enable '%s' in '%s'?", repo, godot.ProjectFile) {
+		if util.Confirm(false, "Enable '%s' in '%s'?", cmd.Repo, godot.ProjectFile) {
 			if err := godot.EnableAddon(folderName); err != nil {
 				util.Warn("Failed to auto-enable addon: %v", err)
 			} else {
@@ -67,11 +63,11 @@ func (cmd *InstallCmd) Run() error {
 }
 
 // Install a branch from github.
-func (cmd *InstallCmd) installBranch(owner string, repo string) (bool, error) {
+func (cmd *InstallCmd) installBranch(repoInfo git.RepoInfo) (bool, error) {
 	util.Info("Installing %s (Branch: %s)", cmd.Repo, cmd.Branch)
 
 	// Fetch the latest commit from the target branch
-	branchData, err := github.GetAddonRef(owner, repo, cmd.Branch, true)
+	branchData, err := github.GetAddonRef(repoInfo, cmd.Branch, true)
 	if err != nil {
 		return false, err
 	}
@@ -95,23 +91,22 @@ func (cmd *InstallCmd) installBranch(owner string, repo string) (bool, error) {
 	}
 
 	// Build the URL and download/extract the files.
-	zipUrl := branchData.GetZipballUrl()
-	loc, err := github.DownloadAndExtract(zipUrl)
+	loc, err := git.GitDownload(repoInfo.BuildRepoUrl(), branchData.GetVersion())
 	if err != nil {
 		return false, err
 	}
 
 	// Make sure to pass the full repo name and branch+commit.
-	cmd.Manifest.AddBranch(loc, cmd.Repo, cmd.Branch, commitHash)
+	cmd.Manifest.AddBranch(loc, repoInfo, cmd.Branch, commitHash)
 	return true, nil
 }
 
 // Install a Release from github.
-func (cmd *InstallCmd) installRelease(owner string, repo string, version string) (bool, error) {
+func (cmd *InstallCmd) installRelease(repoInfo git.RepoInfo, version string) (bool, error) {
 	util.Info("Installing %s (Release: %s)", cmd.Repo, version)
 
 	// Fetch the target release from github.
-	release, err := github.GetAddonRef(owner, repo, version, false)
+	release, err := github.GetAddonRef(repoInfo, version, false)
 	if err != nil {
 		return false, err
 	}
@@ -131,12 +126,12 @@ func (cmd *InstallCmd) installRelease(owner string, repo string, version string)
 		util.Info("Tracking release...")
 	}
 
-	loc, err := github.DownloadAndExtract(release.GetZipballUrl())
+	loc, err := git.GitDownload(repoInfo.BuildRepoUrl(), release.GetVersion())
 	if err != nil {
 		return false, err
 	}
 
 	// Make sure to pass the full repo name to the Addon.
-	cmd.Manifest.AddRelease(loc, cmd.Repo, release.GetVersion())
+	cmd.Manifest.AddRelease(loc, repoInfo, release.GetVersion())
 	return true, nil
 }

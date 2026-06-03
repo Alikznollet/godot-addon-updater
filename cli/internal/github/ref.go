@@ -1,31 +1,24 @@
 package github
 
-import "fmt"
+import (
+	"github.com/alikznollet/godot-wisp/cli/internal/git"
+)
 
 type AddonRef interface {
 	GetVersion() string
-	GetZipballUrl() string
 }
 
 func (r *GitHubRelease) GetVersion() string {
 	return r.TagName
 }
 
-func (r *GitHubRelease) GetZipballUrl() string {
-	return r.ZipballUrl
-}
-
 func (b *GitHubBranch) GetVersion() string {
-	return b.Commit.Sha
+	return b.CommitHash
 }
 
-func (b *GitHubBranch) GetZipballUrl() string {
-	return fmt.Sprintf("https://api.github.com/repos/%s/%s/zipball/%s", b.owner, b.repo, b.Commit.Sha)
-}
-
-func GetAddonRef(owner string, repo string, target string, isBranch bool) (AddonRef, error) {
+func GetAddonRef(repoInfo git.RepoInfo, target string, isBranch bool) (AddonRef, error) {
 	if isBranch {
-		return GetBranch(owner, repo, target)
+		return GetBranch(repoInfo, target)
 	}
-	return GetRelease(owner, repo, target)
+	return GetRelease(repoInfo, target)
 }

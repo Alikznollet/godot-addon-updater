@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/github"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
@@ -18,22 +19,22 @@ const (
 
 // This is used as a way to pass data to the editor plugin.
 type OutdatedAddon struct {
-	Folder  string    `json:"folder"`
-	Repo    string    `json:"repo"`
-	Current string    `json:"current_version"`
-	Latest  string    `json:"latest_version"`
-	Branch  string    `json:"branch,omitempty"`
-	Type    AddonType `json:"addon_type"`
+	Folder   string       `json:"folder"`
+	RepoInfo git.RepoInfo `json:"repo_info"`
+	Current  string       `json:"current_version"`
+	Latest   string       `json:"latest_version"`
+	Branch   string       `json:"branch,omitempty"`
+	Type     AddonType    `json:"addon_type"`
 }
 
 // A single addon struct with JSON support.
 // This struct is written to addons.json.
 type Addon struct {
-	Repo      string    `json:"repo"`
-	Type      AddonType `json:"type"`
-	Version   string    `json:"version"`
-	Untracked bool      `json:"untracked,omitempty"`
-	Commit    string    `json:"commit,omitempty"` // Only used when tracking a branch.
+	RepoInfo  git.RepoInfo `json:"repo_info"`
+	Type      AddonType    `json:"type"`
+	Version   string       `json:"version"`
+	Untracked bool         `json:"untracked,omitempty"`
+	Commit    string       `json:"commit,omitempty"` // Only used when tracking a branch.
 }
 
 // Returns the current version of the addon.
@@ -61,25 +62,25 @@ type AddonManifest struct {
 // Adds an addon based on the branch of a repository.
 // Will track the commit and the branch name.
 // Should only be called after installation succeeds.
-func (m *AddonManifest) AddBranch(folder string, repo string, branch string, commit string) {
+func (m *AddonManifest) AddBranch(folder string, repoInfo git.RepoInfo, branch string, commit string) {
 	m.Addons[folder] = Addon{
-		Repo:    repo,
-		Type:    Branch,
-		Version: branch, // This is the branch name.
-		Commit:  commit,
+		RepoInfo: repoInfo,
+		Type:     Branch,
+		Version:  branch, // This is the branch name.
+		Commit:   commit,
 	}
 }
 
 // Adds an addon to the struct.
 // Should only be called after installing the addon
 // succeeds. The name of the folder is used to index.
-func (m *AddonManifest) AddRelease(folder string, repo string, version string) {
+func (m *AddonManifest) AddRelease(folder string, repoInfo git.RepoInfo, version string) {
 	// We don't have to check if the map exists because that was
 	// done when the object was created.
 	m.Addons[folder] = Addon{
-		Repo:    repo,
-		Type:    Release,
-		Version: version,
+		RepoInfo: repoInfo,
+		Type:     Release,
+		Version:  version,
 	}
 }
 
@@ -109,11 +110,12 @@ func (m *AddonManifest) RemoveAddon(repo string, keep bool) error {
 
 // Looks for an addon by their repo name.
 func (m *AddonManifest) FindByRepo(repo string) (string, Addon, bool) {
-	for folderName, addon := range m.Addons {
-		if addon.Repo == repo {
-			return folderName, addon, true
-		}
-	}
+	// for folderName, addon := range m.Addons {
+	// 	// TODO: Fix
+	// 	// if addon.Repo == repo {
+	// 	// 	return folderName, addon, true
+	// 	// }
+	// }
 	return "", Addon{}, false // No Addon found.
 }
 
@@ -131,15 +133,12 @@ func (m *AddonManifest) CheckAddon(repo string) (bool, github.AddonRef, error) {
 		return false, nil, fmt.Errorf("invalid repository format. Must be 'owner/repo'")
 	}
 
-	o := parts[0]
-	r := parts[1]
-
 	var ref github.AddonRef
 	var err error
 
 	switch addon.Type {
 	case Branch:
-		ref, err = github.GetAddonRef(o, r, addon.Version, true)
+		ref, err = github.GetAddonRef(addon.RepoInfo, addon.Version, true)
 		if err != nil {
 			return false, ref, err
 		}
@@ -152,7 +151,7 @@ func (m *AddonManifest) CheckAddon(repo string) (bool, github.AddonRef, error) {
 			return false, ref, nil
 		}
 	case Release:
-		ref, err = github.GetAddonRef(o, r, "latest", false)
+		ref, err = github.GetAddonRef(addon.RepoInfo, "latest", false)
 		if err != nil {
 			return false, ref, err
 		}

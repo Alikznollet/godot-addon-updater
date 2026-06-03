@@ -1,20 +1,17 @@
 package github
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 
+	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
 // The latest commit on a branch.
 // Contains the url to the zipball.
 type GitHubBranch struct {
-	Name   string       `json:"name"`
-	Commit GitHubCommit `json:"commit"`
-	owner  string
-	repo   string
+	Name       string `json:"name"`
+	CommitHash string `json:"commit"`
 }
 
 type GitHubCommit struct {
@@ -22,39 +19,19 @@ type GitHubCommit struct {
 }
 
 // Fetches the latest commit from the branch specified from the repo specified.
-func GetBranch(owner string, repo string, branch string) (*GitHubBranch, error) {
-	util.Info("Fetching latest '%s' branch info for %s/%s...", branch, owner, repo)
+func GetBranch(repoInfo git.RepoInfo, branch string) (*GitHubBranch, error) {
+	url := repoInfo.BuildRepoUrl()
 
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/branches/%s", owner, repo, branch)
+	util.Info("Fetching latest '%s' branch info for %s...", branch, url)
 
-	// Create the request.
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
-	}
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to reach GitHub: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// Handle common HTTP codes
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("branch '%s' not found on repository %s/%s", branch, owner, repo)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GitHub API returned status: %d", resp.StatusCode)
+	commitHash := git.GetLatestCommitForBranch(url, branch)
+	if commitHash == "" {
+		return nil, fmt.Errorf("failed to fetch latest commit")
 	}
 
 	var branchData GitHubBranch
-	if err := json.NewDecoder(resp.Body).Decode(&branchData); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON: %v", err)
-	}
-	branchData.owner = owner
-	branchData.repo = repo
+	branchData.Name = branch
+	branchData.CommitHash = commitHash
 
 	util.Success("Found '%s' on branch '%s'", branchData.GetVersion(), branch)
 

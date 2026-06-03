@@ -38,8 +38,8 @@ func (m *AddonManifest) CompareWithDisk() ([]AddonStatus, error) {
 		}
 
 		// If it's tracked, prefer showing the Repo name instead of just the folder
-		if exists && addon.Repo != "" {
-			status.Name = addon.Repo
+		if exists && addon.RepoInfo.Repo != "" {
+			status.Name = addon.RepoInfo.Repo
 		}
 
 		statuses = append(statuses, status)

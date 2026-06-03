@@ -20,7 +20,6 @@ var version = "dev"
 
 var cli struct {
 	Init      commands.InitCmd      `cmd:"" help:"Initialize a new addons.json file."`
-	Register  commands.RegisterCmd  `cmd:"" help:"Register a domain together with a PAT for that specific domain."`
 	Install   commands.InstallCmd   `cmd:"" help:"Install a new addon from GitHub."`
 	Uninstall commands.UninstallCmd `cmd:"" help:"Uninstall an addon from the project."`
 	Update    commands.UpdateCmd    `cmd:"" help:"Check for updates for all installed addons or a list of provided ones."`

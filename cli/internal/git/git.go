@@ -127,7 +127,7 @@ func GitDownload(repoUrl string, version string) (string, error) {
 		return "", fmt.Errorf("could not find an 'addons' folder anywhere in the repository")
 	}
 
-	util.Info("Found 'addons' folder at: %s\n", targetAddonsPath)
+	util.Info("Found 'addons' folder.")
 
 	// We can then call sparse-checkout to only get the addons folder.
 	sparseCmd := exec.Command("git", "sparse-checkout", "set", targetAddonsPath)

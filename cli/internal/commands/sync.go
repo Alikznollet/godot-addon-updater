@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/github"
@@ -93,13 +92,13 @@ func (cmd *SyncCmd) Run() error {
 // Displays the menu for an unknown folder
 // Returns true if the manifest was modified.
 func (cmd *SyncCmd) handleUnknown(folderName string) bool {
-	util.Info("Found unknown addon folder: %s", util.Cyan(folderName))
+	util.Warn("Found unknown addon folder: %s", util.Cyan(folderName))
 
 	fmt.Println()
 
 	// Print the menu cleanly.
 	util.Info("What do you want to do with the unknown folder?")
-	fmt.Printf("  [%s] Link to a GitHub repository\n", util.Cyan("1"))
+	fmt.Printf("  [%s] Link to a repository\n", util.Cyan("1"))
 	fmt.Printf("  [%s] Mark as Local (ignore in future syncs)\n", util.Cyan("2"))
 	fmt.Printf("  [%s] Skip for now\n", util.Cyan("3"))
 
@@ -116,7 +115,7 @@ func (cmd *SyncCmd) handleUnknown(folderName string) bool {
 		util.Success("Marked '%s' as a local/untracked addon.", folderName)
 		return true
 	case "1":
-		return cmd.linkToGitHub(folderName)
+		return cmd.linkToRepo(folderName)
 	default:
 		util.Warn("Invalid choice. Skipping...")
 		return false
@@ -125,11 +124,11 @@ func (cmd *SyncCmd) handleUnknown(folderName string) bool {
 
 // Displays the menu for linking to github and handles the fresh installation
 // Returns true if the manifest was modified.
-func (cmd *SyncCmd) linkToGitHub(folderName string) bool {
-	repo := util.Prompt("", "Enter GitHub repository (e.g. ramokz/phantom-camera)")
-	parts := strings.Split(repo, "/")
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		util.Warn("Invalid format. Must be 'owner/repo'. Skipping...")
+func (cmd *SyncCmd) linkToRepo(folderName string) bool {
+	repo := util.Prompt("", "Enter repository (e.g. https://github.com/ramokz/phantom-camera)")
+	repoInfo, err := git.ParseRepoString(repo)
+	if err != nil {
+		util.Warn("Invalid format. Must be 'owner/repo' or a url. Skipping...")
 		return false
 	}
 
@@ -148,10 +147,9 @@ func (cmd *SyncCmd) linkToGitHub(folderName string) bool {
 	}
 
 	// Fetch from GH
-	// TODO: Fix
-	ref, err := github.GetAddonRef(git.RepoInfo{}, target, isBranch)
+	ref, err := github.GetAddonRef(repoInfo, target, isBranch)
 	if err != nil {
-		util.Error("Could not verify with GitHub: %v", err)
+		util.Error("Could not verify with remote: %v", err)
 		return false
 	}
 
@@ -163,8 +161,13 @@ func (cmd *SyncCmd) linkToGitHub(folderName string) bool {
 			return false
 		}
 
-		// TODO: Fix url
-		loc, err := git.GitDownload("", ref.GetVersion())
+		var loc string
+		if isBranch {
+			loc, err = git.GitDownload(repoInfo.BuildRepoUrl(), target)
+		} else {
+			loc, err = git.GitDownload(repoInfo.BuildRepoUrl(), ref.GetVersion())
+		}
+
 		if err != nil {
 			util.Error("Could not perform fresh install: %v", err)
 			return false
@@ -173,12 +176,11 @@ func (cmd *SyncCmd) linkToGitHub(folderName string) bool {
 	}
 
 	// Map it to a manifest
-	// TODO: Fix both
 	if isBranch {
-		cmd.Manifest.AddBranch(folderName, git.RepoInfo{}, target, ref.GetVersion())
+		cmd.Manifest.AddBranch(folderName, repoInfo, target, ref.GetVersion())
 		util.Success("Linked '%s' to branch '%s'!", folderName, target)
 	} else {
-		cmd.Manifest.AddRelease(folderName, git.RepoInfo{}, ref.GetVersion())
+		cmd.Manifest.AddRelease(folderName, repoInfo, ref.GetVersion())
 		util.Success("Linked '%s' to release '%s'!", folderName, ref.GetVersion())
 	}
 

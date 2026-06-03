@@ -1,9 +1,0 @@
-[gd_scene format=3 uid="uid://37tse5wvrrhu"]
-
-[ext_resource type="Script" uid="uid://cuh444xdkiwb8" path="res://addons/spatial_remarks/view_sr_raycast_3d.gd" id="1_5xud8"]
-
-[node name="ViewSrRaycast3D" type="RayCast3D" unique_id=607180964]
-target_position = Vector3(0, 0, -30)
-collide_with_areas = true
-collide_with_bodies = false
-script = ExtResource("1_5xud8")

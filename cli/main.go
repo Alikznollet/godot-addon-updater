@@ -28,6 +28,7 @@ var cli struct {
 	Check     commands.CheckCmd     `cmd:"" help:"Check for updates without directly installing them."`
 	List      commands.ListCmd      `cmd:"" help:"List all addons in the current project."`
 	Version   kong.VersionFlag      `short:"v" help:"Print the current version and exit."`
+	Test      commands.TestCmd      `cmd:"" help:"test"`
 }
 
 func main() {

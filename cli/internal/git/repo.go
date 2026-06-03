@@ -52,3 +52,9 @@ func (r *RepoInfo) BuildRepoUrl() string {
 	url := fmt.Sprintf("https://%s/%s/%s", r.Domain, r.Owner, r.Repo)
 	return url
 }
+
+// Build a reference to the name and owner of the repo.
+func (r *RepoInfo) BuildRepoRef() string {
+	ref := fmt.Sprintf("%s/%s", r.Owner, r.Repo)
+	return ref
+}

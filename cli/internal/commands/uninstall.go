@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 
+	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/godot"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
@@ -18,7 +19,12 @@ type UninstallCmd struct {
 }
 
 func (cmd *UninstallCmd) Run() error {
-	folderName, _, isTracked := cmd.Manifest.FindByRepo(cmd.Repo)
+	repoInfo, err := git.ParseRepoString(cmd.Repo)
+	if err != nil {
+		return err
+	}
+
+	folderName, _, isTracked := cmd.Manifest.FindByRepo(repoInfo)
 	if !isTracked {
 		return fmt.Errorf("addon '%s' is not tracked", cmd.Repo)
 	}
@@ -37,7 +43,7 @@ func (cmd *UninstallCmd) Run() error {
 	}
 
 	// Remove the addon.
-	if err := cmd.Manifest.RemoveAddon(cmd.Repo, !remove); err != nil {
+	if err := cmd.Manifest.RemoveAddon(repoInfo, !remove); err != nil {
 		return err
 	}
 

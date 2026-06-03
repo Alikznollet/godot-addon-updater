@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://dkhs7a3sx7a04"]
+
+[ext_resource type="Script" uid="uid://bcwlwlyl187i8" path="res://addons/spatial_remarks/sr_ingame_overlay.gd" id="1_8g51h"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lqroe"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 1, 1, 0.6)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[node name="SpatialRemarkOverlay" type="CanvasLayer" unique_id=1762695129 node_paths=PackedStringArray("_panel_container", "_content_rtl")]
+layer = 100
+script = ExtResource("1_8g51h")
+_panel_container = NodePath("MarginContainer/PanelContainer")
+_content_rtl = NodePath("MarginContainer/PanelContainer/MarginContainer/VBoxContainer/ContentRTL")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1217962904]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -228.0
+offset_top = -128.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer" unique_id=2005888188]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_lqroe")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/PanelContainer" unique_id=864288269]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer" unique_id=738483545]
+layout_mode = 2
+
+[node name="ContentRTL" type="RichTextLabel" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=1072175676]
+custom_minimum_size = Vector2(200, 100)
+layout_mode = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+bbcode_enabled = true
+text = "this is some example content
+[i]~someone[/i]"
+fit_content = true

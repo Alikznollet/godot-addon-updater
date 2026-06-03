@@ -50,10 +50,9 @@ func (cmd *CheckCmd) Run() error {
 	util.Warn("Found %d available updates:", len(outdated))
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
-	// TODO: fix
-	// for _, o := range outdated {
-	// 	util.PrintListItem(w, o.Repo, "Update", fmt.Sprintf("%s -> %s", o.Current, o.Latest))
-	// }
+	for _, o := range outdated {
+		util.PrintListItem(w, o.RepoInfo.BuildRepoRef(), "Update", fmt.Sprintf("%s -> %s", o.Current, o.Latest))
+	}
 	w.Flush()
 
 	return nil

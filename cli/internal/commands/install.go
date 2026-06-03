@@ -43,7 +43,7 @@ func (cmd *InstallCmd) Run() error {
 
 	// Only run updating procedure when a new file arrived.
 	if updated {
-		folderName, _, _ := cmd.Manifest.FindByRepo(cmd.Repo)
+		folderName, _, _ := cmd.Manifest.FindByRepo(repoInfo)
 
 		if util.Confirm(false, "Enable '%s' in '%s'?", cmd.Repo, godot.ProjectFile) {
 			if err := godot.EnableAddon(folderName); err != nil {
@@ -74,7 +74,7 @@ func (cmd *InstallCmd) installBranch(repoInfo git.RepoInfo) (bool, error) {
 
 	// Extract the commit for fetching.
 	commitHash := branchData.GetVersion()
-	_, addon, isTracked := cmd.Manifest.FindByRepo(cmd.Repo)
+	_, addon, isTracked := cmd.Manifest.FindByRepo(repoInfo)
 
 	if isTracked {
 		if addon.Commit != "" {
@@ -111,7 +111,7 @@ func (cmd *InstallCmd) installRelease(repoInfo git.RepoInfo, version string) (bo
 		return false, err
 	}
 
-	_, addon, isTracked := cmd.Manifest.FindByRepo(cmd.Repo)
+	_, addon, isTracked := cmd.Manifest.FindByRepo(repoInfo)
 
 	if isTracked {
 		if release.GetVersion() == addon.Version {

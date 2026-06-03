@@ -28,7 +28,11 @@ func (cmd *UpdateCmd) Run() error {
 		}
 	} else {
 		for _, repoName := range cmd.Repos {
-			_, addon, isTracked := cmd.Manifest.FindByRepo(repoName)
+			repoInfo, err := git.ParseRepoString(repoName)
+			if err != nil {
+				return err
+			}
+			_, addon, isTracked := cmd.Manifest.FindByRepo(repoInfo)
 			if !isTracked {
 				util.Warn("Addon '%s' is not tracked by Wisp, skipping...", repoName)
 				continue
@@ -47,7 +51,7 @@ func (cmd *UpdateCmd) Run() error {
 
 	// Check and update repos that need it.
 	for _, addon := range targets {
-		isUpToDate, ref, err := cmd.Manifest.CheckAddon(addon.RepoInfo.Repo)
+		isUpToDate, ref, err := cmd.Manifest.CheckAddon(addon.RepoInfo)
 		if err != nil {
 			util.Warn("Failed to check %s: %v", addon.RepoInfo.Repo, err)
 			continue

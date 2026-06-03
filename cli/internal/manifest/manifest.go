@@ -87,8 +87,8 @@ func (m *AddonManifest) AddRelease(folder string, repoInfo git.RepoInfo, version
 // Removes an addon from the struct.
 // Will silently fail if the addon wasn't installed in the first place.
 // Will also remove the folder the addon was installed in if prompted.
-func (m *AddonManifest) RemoveAddon(repo string, keep bool) error {
-	folderName, _, isTracked := m.FindByRepo(repo)
+func (m *AddonManifest) RemoveAddon(repoInfo git.RepoInfo, keep bool) error {
+	folderName, _, isTracked := m.FindByRepo(repoInfo)
 	if !isTracked {
 		// Silently exit if it wasn't installed in the first place.
 		return nil
@@ -96,7 +96,7 @@ func (m *AddonManifest) RemoveAddon(repo string, keep bool) error {
 
 	if !keep {
 		// Removes all files related to this addon.
-		util.Warn("Removing all files associated to %s", repo)
+		util.Warn("Removing all files associated to %s", repoInfo.BuildRepoRef())
 		err := deleteAddonFolder(folderName)
 		if err != nil {
 			return err
@@ -109,26 +109,25 @@ func (m *AddonManifest) RemoveAddon(repo string, keep bool) error {
 }
 
 // Looks for an addon by their repo name.
-func (m *AddonManifest) FindByRepo(repo string) (string, Addon, bool) {
-	// for folderName, addon := range m.Addons {
-	// 	// TODO: Fix
-	// 	// if addon.Repo == repo {
-	// 	// 	return folderName, addon, true
-	// 	// }
-	// }
+func (m *AddonManifest) FindByRepo(repoInfo git.RepoInfo) (string, Addon, bool) {
+	for folderName, addon := range m.Addons {
+		if addon.RepoInfo == repoInfo {
+			return folderName, addon, true
+		}
+	}
 	return "", Addon{}, false // No Addon found.
 }
 
 // Returns whether a repository is up to date or not.
-func (m *AddonManifest) CheckAddon(repo string) (bool, github.AddonRef, error) {
-	_, addon, isTracked := m.FindByRepo(repo)
+func (m *AddonManifest) CheckAddon(repoInfo git.RepoInfo) (bool, github.AddonRef, error) {
+	_, addon, isTracked := m.FindByRepo(repoInfo)
 
 	if !isTracked {
-		return false, nil, fmt.Errorf("%s is not tracked in the current project", repo)
+		return false, nil, fmt.Errorf("%s is not tracked in the current project", repoInfo.BuildRepoRef())
 	}
 
 	// Split the repo name
-	parts := strings.Split(repo, "/")
+	parts := strings.Split(repoInfo.BuildRepoRef(), "/")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return false, nil, fmt.Errorf("invalid repository format. Must be 'owner/repo'")
 	}

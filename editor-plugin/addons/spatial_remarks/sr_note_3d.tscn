@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://bko6agbuf2i3p"]
+
+[ext_resource type="Script" uid="uid://dtw1if66snftf" path="res://addons/spatial_remarks/sr_note_3d.gd" id="1_t6sfb"]
+[ext_resource type="Texture2D" uid="uid://c0ihh03drp5c4" path="res://addons/spatial_remarks/assets/note_empty.svg" id="2_rbtyq"]
+[ext_resource type="Texture2D" uid="uid://1grteytmijqi" path="res://addons/spatial_remarks/assets/note.svg" id="3_ywrjs"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_pvsh3"]
+radius = 0.8
+
+[node name="SRNote3D" type="Area3D" unique_id=870001438 node_paths=PackedStringArray("_sprite_3d")]
+collision_layer = 2147483648
+collision_mask = 2147483648
+collision_priority = 2.0
+priority = 5
+script = ExtResource("1_t6sfb")
+_note_empty = ExtResource("2_rbtyq")
+_note_visible = ExtResource("3_ywrjs")
+_sprite_3d = NodePath("Sprite3D")
+
+[node name="Sprite3D" type="Sprite3D" parent="." unique_id=226505692]
+billboard = 1
+no_depth_test = true
+texture = ExtResource("3_ywrjs")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=572163169]
+shape = SubResource("SphereShape3D_pvsh3")
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://cwoli8cjyvkcp"]
+
+[node name="ColumnSelection" type="PopupMenu" unique_id=1608501108]
+oversampling_override = 1.0
+visible = true
+hide_on_item_selection = false
+hide_on_checkable_item_selection = false
+item_count = 1
+item_0/text = "Test"
+item_0/checkable = 1
+item_0/id = 0

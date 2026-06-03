@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://c887fr2gwccav"]
+
+[ext_resource type="Script" uid="uid://csonci28oqh8q" path="res://addons/spatial_remarks/sr_note_2d.gd" id="1_dnpet"]
+[ext_resource type="Texture2D" uid="uid://c0ihh03drp5c4" path="res://addons/spatial_remarks/assets/note_empty.svg" id="2_td031"]
+[ext_resource type="Texture2D" uid="uid://1grteytmijqi" path="res://addons/spatial_remarks/assets/note.svg" id="3_ivymq"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1k14x"]
+radius = 39.012817
+
+[node name="SRNote2D" type="Area2D" unique_id=854449519 node_paths=PackedStringArray("_sprite_2d")]
+z_index = 100
+z_as_relative = false
+scale = Vector2(0.4, 0.4)
+collision_layer = 2147483648
+collision_mask = 2147483648
+collision_priority = 2.0
+priority = 5
+script = ExtResource("1_dnpet")
+_note_empty = ExtResource("2_td031")
+_note_visible = ExtResource("3_ivymq")
+_sprite_2d = NodePath("Sprite2D")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=869131073]
+texture = ExtResource("3_ivymq")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=904011923]
+shape = SubResource("CircleShape2D_1k14x")
+debug_color = Color(0, 0.5950001, 0.7, 0)
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

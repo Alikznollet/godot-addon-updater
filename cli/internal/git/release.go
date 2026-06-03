@@ -1,9 +1,8 @@
-package github
+package git
 
 import (
 	"fmt"
 
-	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
@@ -14,14 +13,14 @@ type GitHubRelease struct {
 }
 
 // Returns a GitHub Release.
-func GetRelease(repoInfo git.RepoInfo, version string) (*GitHubRelease, error) {
+func GetRelease(repoInfo RepoInfo, version string) (*GitHubRelease, error) {
 	url := repoInfo.BuildRepoUrl()
 
 	util.Info("Fetching '%s' release info for %s...", version, url)
 
 	var v string
 	if version == "latest" {
-		v = git.GetLatestTag(url)
+		v = GetLatestTag(url)
 	} else {
 		v = version
 	}

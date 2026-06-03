@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/alikznollet/godot-wisp/cli/internal/git"
-	"github.com/alikznollet/godot-wisp/cli/internal/github"
 	"github.com/alikznollet/godot-wisp/cli/internal/godot"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
@@ -67,7 +66,7 @@ func (cmd *InstallCmd) installBranch(repoInfo git.RepoInfo) (bool, error) {
 	util.Info("Installing %s (Branch: %s)", cmd.Repo, cmd.Branch)
 
 	// Fetch the latest commit from the target branch
-	branchData, err := github.GetAddonRef(repoInfo, cmd.Branch, true)
+	branchData, err := git.GetAddonRef(repoInfo, cmd.Branch, true)
 	if err != nil {
 		return false, err
 	}
@@ -106,7 +105,7 @@ func (cmd *InstallCmd) installRelease(repoInfo git.RepoInfo, version string) (bo
 	util.Info("Installing %s (Release: %s)", cmd.Repo, version)
 
 	// Fetch the target release from github.
-	release, err := github.GetAddonRef(repoInfo, version, false)
+	release, err := git.GetAddonRef(repoInfo, version, false)
 	if err != nil {
 		return false, err
 	}

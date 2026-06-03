@@ -1,8 +1,4 @@
-package github
-
-import (
-	"github.com/alikznollet/godot-wisp/cli/internal/git"
-)
+package git
 
 type AddonRef interface {
 	GetVersion() string
@@ -16,7 +12,7 @@ func (b *GitHubBranch) GetVersion() string {
 	return b.CommitHash
 }
 
-func GetAddonRef(repoInfo git.RepoInfo, target string, isBranch bool) (AddonRef, error) {
+func GetAddonRef(repoInfo RepoInfo, target string, isBranch bool) (AddonRef, error) {
 	if isBranch {
 		return GetBranch(repoInfo, target)
 	}

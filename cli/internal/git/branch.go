@@ -1,9 +1,8 @@
-package github
+package git
 
 import (
 	"fmt"
 
-	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
@@ -19,12 +18,12 @@ type GitHubCommit struct {
 }
 
 // Fetches the latest commit from the branch specified from the repo specified.
-func GetBranch(repoInfo git.RepoInfo, branch string) (*GitHubBranch, error) {
+func GetBranch(repoInfo RepoInfo, branch string) (*GitHubBranch, error) {
 	url := repoInfo.BuildRepoUrl()
 
 	util.Info("Fetching latest '%s' branch info for %s...", branch, url)
 
-	commitHash := git.GetLatestCommitForBranch(url, branch)
+	commitHash := GetLatestCommitForBranch(url, branch)
 	if commitHash == "" {
 		return nil, fmt.Errorf("failed to fetch latest commit")
 	}

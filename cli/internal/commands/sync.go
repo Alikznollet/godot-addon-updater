@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/alikznollet/godot-wisp/cli/internal/git"
-	"github.com/alikznollet/godot-wisp/cli/internal/github"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
@@ -147,7 +146,7 @@ func (cmd *SyncCmd) linkToRepo(folderName string) bool {
 	}
 
 	// Fetch from GH
-	ref, err := github.GetAddonRef(repoInfo, target, isBranch)
+	ref, err := git.GetAddonRef(repoInfo, target, isBranch)
 	if err != nil {
 		util.Error("Could not verify with remote: %v", err)
 		return false

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/alikznollet/godot-wisp/cli/internal/git"
-	"github.com/alikznollet/godot-wisp/cli/internal/github"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
@@ -119,7 +118,7 @@ func (m *AddonManifest) FindByRepo(repoInfo git.RepoInfo) (string, Addon, bool) 
 }
 
 // Returns whether a repository is up to date or not.
-func (m *AddonManifest) CheckAddon(repoInfo git.RepoInfo) (bool, github.AddonRef, error) {
+func (m *AddonManifest) CheckAddon(repoInfo git.RepoInfo) (bool, git.AddonRef, error) {
 	_, addon, isTracked := m.FindByRepo(repoInfo)
 
 	if !isTracked {
@@ -132,12 +131,12 @@ func (m *AddonManifest) CheckAddon(repoInfo git.RepoInfo) (bool, github.AddonRef
 		return false, nil, fmt.Errorf("invalid repository format. Must be 'owner/repo'")
 	}
 
-	var ref github.AddonRef
+	var ref git.AddonRef
 	var err error
 
 	switch addon.Type {
 	case Branch:
-		ref, err = github.GetAddonRef(addon.RepoInfo, addon.Version, true)
+		ref, err = git.GetAddonRef(addon.RepoInfo, addon.Version, true)
 		if err != nil {
 			return false, ref, err
 		}
@@ -150,7 +149,7 @@ func (m *AddonManifest) CheckAddon(repoInfo git.RepoInfo) (bool, github.AddonRef
 			return false, ref, nil
 		}
 	case Release:
-		ref, err = github.GetAddonRef(addon.RepoInfo, "latest", false)
+		ref, err = git.GetAddonRef(addon.RepoInfo, "latest", false)
 		if err != nil {
 			return false, ref, err
 		}

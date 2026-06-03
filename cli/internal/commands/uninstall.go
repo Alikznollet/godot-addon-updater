@@ -15,7 +15,7 @@ import (
 
 type UninstallCmd struct {
 	RequiresManifestCmd
-	Repo string `arg:"" name:"repo" help:"The GitHub repository (e.g. ramokz/phantom-camera)."`
+	Repo string `arg:"" name:"repo" help:"The repository formatted as a url or just the owner and repo name (e.g. ramokz/phantom-camera or https://github.com/ramokz/phantom-camera)."`
 }
 
 func (cmd *UninstallCmd) Run() error {

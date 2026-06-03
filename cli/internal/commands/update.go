@@ -74,8 +74,7 @@ func (cmd *UpdateCmd) Run() error {
 
 		// Download and apply.
 		util.Info("Applying update...")
-		// TODO: Fix url
-		loc, err := git.GitDownload("", ref.GetVersion())
+		loc, err := git.GitDownload(addon.RepoInfo.BuildRepoUrl(), ref.GetVersion())
 		if err != nil {
 			util.Error("Failed to download %s: %v", addon.RepoInfo.Repo, err)
 			continue

@@ -51,6 +51,7 @@ func (cmd *InstallCmd) Run(ctx context.Context) error {
 				util.Warn("Failed to auto-enable addon: %v", err)
 			} else {
 				util.Success("Addon enabled!")
+				util.Warn("Note: If Godot is currently open, you will have to reload the editor for the changes to take effect.")
 			}
 		}
 

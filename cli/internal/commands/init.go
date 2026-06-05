@@ -79,6 +79,7 @@ func (cmd *InitCmd) Run(ctx context.Context) error {
 			return fmt.Errorf("failed to enable addon in project.godot: %v", err)
 		}
 
+		util.Warn("Note: If Godot is currently open, you will have to reload the editor for the changes to take effect.")
 		util.Success("Wisp Godot Plugin successfully installed and enabled!")
 	} else {
 		util.Info("Skipping plugin installation. You can always install it later!")

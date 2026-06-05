@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
@@ -74,12 +75,29 @@ func GitDownload(repoUrl string, version string) (string, error) {
 		tempDir,
 	)
 
-	// Route output to the user
-	// TODO: Replace with a loading bar?
-	cloneCmd.Stdout = os.Stdout
-	cloneCmd.Stderr = os.Stderr
+	spinner := util.NewSpinner("Cloning repository")
+	done := make(chan bool)
 
-	if err := cloneCmd.Run(); err != nil {
+	// Start the animation
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				spinner.Add(1)
+				time.Sleep(100 * time.Millisecond)
+			}
+		}
+	}()
+
+	err = cloneCmd.Run()
+
+	// Stop the animation.
+	done <- true
+	spinner.Finish()
+
+	if err != nil {
 		return "", fmt.Errorf("git clone failed: %v", err)
 	}
 

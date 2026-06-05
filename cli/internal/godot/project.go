@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -56,7 +57,7 @@ func EnableAddon(addonFolder string) error {
 			} else if inEditorPlugins && !foundEnabled {
 				// We left the plugins section without finding 'enabled'. Inject it here!
 				newLine := fmt.Sprintf("enabled=PackedStringArray(%s)", targetPath)
-				lines = append(lines[:i], append([]string{newLine, ""}, lines[i:]...)...)
+				lines = slices.Insert(lines, i, newLine, "")
 				modified = true
 				break
 			} else {

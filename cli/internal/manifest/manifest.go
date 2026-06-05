@@ -1,12 +1,16 @@
 package manifest
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
+
+// This dictates the shape of the JSON Wisp expects.
+const CurrentSchemaVersion = 1
 
 // Enum used as type of Addon.
 type AddonType string
@@ -55,7 +59,8 @@ func (a *Addon) GetCurrentBranch() string {
 // The complete list of addons mapping their repo names
 // to their respective Addon structs.
 type AddonManifest struct {
-	Addons map[string]Addon `json:"addons"`
+	SchemaVersion int              `json:"schema_version"`
+	Addons        map[string]Addon `json:"addons"`
 }
 
 // Adds an addon based on the branch of a repository.
@@ -120,7 +125,7 @@ func (m *AddonManifest) FindByRepo(repoInfo git.RepoInfo) (string, Addon, bool) 
 }
 
 // Returns whether a repository is up to date or not.
-func (m *AddonManifest) CheckAddon(repoInfo git.RepoInfo) (bool, git.AddonRef, error) {
+func (m *AddonManifest) CheckAddon(ctx context.Context, repoInfo git.RepoInfo) (bool, git.AddonRef, error) {
 	_, addon, isTracked := m.FindByRepo(repoInfo)
 
 	if !isTracked {
@@ -138,7 +143,7 @@ func (m *AddonManifest) CheckAddon(repoInfo git.RepoInfo) (bool, git.AddonRef, e
 
 	switch addon.Type {
 	case Branch:
-		ref, err = git.GetAddonRef(addon.RepoInfo, addon.Version, true)
+		ref, err = git.GetAddonRef(ctx, addon.RepoInfo, addon.Version, true)
 		if err != nil {
 			return false, ref, err
 		}
@@ -151,7 +156,7 @@ func (m *AddonManifest) CheckAddon(repoInfo git.RepoInfo) (bool, git.AddonRef, e
 			return false, ref, nil
 		}
 	case Release:
-		ref, err = git.GetAddonRef(addon.RepoInfo, "latest", false)
+		ref, err = git.GetAddonRef(ctx, addon.RepoInfo, "latest", false)
 		if err != nil {
 			return false, ref, err
 		}

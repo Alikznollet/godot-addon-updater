@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"context"
+
 	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/godot"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
@@ -18,7 +20,7 @@ type InstallCmd struct {
 	Branch string `short:"b" xor:"target" help:"Branch to track instead of tracking releases (e.g. main)."`
 }
 
-func (cmd *InstallCmd) Run() error {
+func (cmd *InstallCmd) Run(ctx context.Context) error {
 	// Split the repo name
 	repoInfo, err := git.ParseRepoString(cmd.Repo)
 	if err != nil {
@@ -27,13 +29,13 @@ func (cmd *InstallCmd) Run() error {
 
 	var updated bool
 	if cmd.Branch != "" {
-		updated, err = cmd.installBranch(repoInfo)
+		updated, err = cmd.installBranch(ctx, repoInfo)
 	} else {
 		version := cmd.Tag
 		if version == "" {
 			version = "latest"
 		}
-		updated, err = cmd.installRelease(repoInfo, version)
+		updated, err = cmd.installRelease(ctx, repoInfo, version)
 	}
 
 	if err != nil {
@@ -49,6 +51,7 @@ func (cmd *InstallCmd) Run() error {
 				util.Warn("Failed to auto-enable addon: %v", err)
 			} else {
 				util.Success("Addon enabled!")
+				util.Warn("Note: If Godot is currently open, you will have to reload the editor for the changes to take effect.")
 			}
 		}
 
@@ -62,11 +65,11 @@ func (cmd *InstallCmd) Run() error {
 }
 
 // Install a branch from github.
-func (cmd *InstallCmd) installBranch(repoInfo git.RepoInfo) (bool, error) {
+func (cmd *InstallCmd) installBranch(ctx context.Context, repoInfo git.RepoInfo) (bool, error) {
 	util.Info("Installing %s (Branch: %s)", cmd.Repo, cmd.Branch)
 
 	// Fetch the latest commit from the target branch
-	branchData, err := git.GetAddonRef(repoInfo, cmd.Branch, true)
+	branchData, err := git.GetAddonRef(ctx, repoInfo, cmd.Branch, true)
 	if err != nil {
 		return false, err
 	}
@@ -90,7 +93,7 @@ func (cmd *InstallCmd) installBranch(repoInfo git.RepoInfo) (bool, error) {
 	}
 
 	// Build the URL and download/extract the files.
-	loc, err := git.GitDownload(repoInfo.BuildRepoUrl(), branchData.GetVersion())
+	loc, err := git.GitDownload(ctx, repoInfo.BuildRepoUrl(), branchData.GetVersion())
 	if err != nil {
 		return false, err
 	}
@@ -101,11 +104,11 @@ func (cmd *InstallCmd) installBranch(repoInfo git.RepoInfo) (bool, error) {
 }
 
 // Install a Release from github.
-func (cmd *InstallCmd) installRelease(repoInfo git.RepoInfo, version string) (bool, error) {
+func (cmd *InstallCmd) installRelease(ctx context.Context, repoInfo git.RepoInfo, version string) (bool, error) {
 	util.Info("Installing %s (Release: %s)", cmd.Repo, version)
 
 	// Fetch the target release from github.
-	release, err := git.GetAddonRef(repoInfo, version, false)
+	release, err := git.GetAddonRef(ctx, repoInfo, version, false)
 	if err != nil {
 		return false, err
 	}
@@ -125,7 +128,7 @@ func (cmd *InstallCmd) installRelease(repoInfo git.RepoInfo, version string) (bo
 		util.Info("Tracking release...")
 	}
 
-	loc, err := git.GitDownload(repoInfo.BuildRepoUrl(), release.GetVersion())
+	loc, err := git.GitDownload(ctx, repoInfo.BuildRepoUrl(), release.GetVersion())
 	if err != nil {
 		return false, err
 	}

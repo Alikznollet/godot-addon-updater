@@ -37,6 +37,7 @@ func (cmd *UninstallCmd) Run() error {
 			util.Warn("Could not modify '%s': %v", godot.ProjectFile, err)
 		} else {
 			util.Info("Disabled plugin in '%s'.", godot.ProjectFile)
+			util.Warn("Note: If Godot is currently open, you will have to reload the editor for the changes to take effect.")
 		}
 	} else {
 		util.Info("Untracking %s (keeping files on disk)...", cmd.Repo)

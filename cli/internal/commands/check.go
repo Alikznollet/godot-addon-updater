@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -19,13 +20,13 @@ type CheckCmd struct {
 	Json bool `short:"j" help:"Return a structured JSON object instead of CLI output."`
 }
 
-func (cmd *CheckCmd) Run() error {
+func (cmd *CheckCmd) Run(ctx context.Context) error {
 	if cmd.Json {
 		util.MuteUI() // Mute the UI if we ask for JSON.
 	}
 
 	// Fetch the outdated addons.
-	outdated, err := manifest.FetchOutdatedAddons(cmd.Manifest)
+	outdated, err := manifest.FetchOutdatedAddons(ctx, cmd.Manifest)
 	if err != nil {
 		return err
 	}

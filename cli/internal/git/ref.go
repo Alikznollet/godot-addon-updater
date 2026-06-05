@@ -1,5 +1,7 @@
 package git
 
+import "context"
+
 type AddonRef interface {
 	GetVersion() string
 }
@@ -12,9 +14,9 @@ func (b *GitHubBranch) GetVersion() string {
 	return b.CommitHash
 }
 
-func GetAddonRef(repoInfo RepoInfo, target string, isBranch bool) (AddonRef, error) {
+func GetAddonRef(ctx context.Context, repoInfo RepoInfo, target string, isBranch bool) (AddonRef, error) {
 	if isBranch {
-		return GetBranch(repoInfo, target)
+		return GetBranch(ctx, repoInfo, target)
 	}
-	return GetRelease(repoInfo, target)
+	return GetRelease(ctx, repoInfo, target)
 }

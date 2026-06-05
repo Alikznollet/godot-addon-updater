@@ -3,6 +3,7 @@ package manifest
 // Defines the IO functionality for addons.json.
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,7 +14,7 @@ import (
 )
 
 // Name of the manifest file.
-const ManifestName = "addons.json"
+const ManifestName = "wisp.json"
 
 // Returns a list of all folder names inside of res://addons
 func GetAddonFolderContents() ([]string, error) {
@@ -51,7 +52,8 @@ func InitManifest(force bool) error {
 	}
 
 	m := AddonManifest{
-		Addons: make(map[string]Addon),
+		Addons:        make(map[string]Addon),
+		SchemaVersion: CurrentSchemaVersion, // Pin the current schema version.
 	}
 	return SaveManifest(&m)
 }
@@ -64,10 +66,16 @@ func SaveManifest(manifest *AddonManifest) error {
 		return fmt.Errorf("failed to encode JSON: %w", err)
 	}
 
-	// Write the manifest to the file.
-	err = os.WriteFile(ManifestName, jsonData, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to write '%s' to disk: %w", ManifestName, err)
+	// Write the manifest to a temp file.
+	tmpFile := fmt.Sprintf("%s.tmp", ManifestName)
+	if err = os.WriteFile(tmpFile, jsonData, 0644); err != nil {
+		return fmt.Errorf("failed to write temporary manifest: %v", err)
+	}
+
+	// Atomically swap it.
+	if err := os.Rename(tmpFile, ManifestName); err != nil {
+		os.Remove(tmpFile)
+		return fmt.Errorf("failed to update wisp.json: %v", err)
 	}
 
 	return nil
@@ -91,6 +99,12 @@ func LoadManifest() (*AddonManifest, error) {
 	err = json.Unmarshal(data, &manifest)
 	if err != nil {
 		return manifest, fmt.Errorf("failed to parse '%s': %w", ManifestName, err)
+	}
+
+	// Check for new version of the manifest.
+	// ! Any migrations from older to newer version can be prompted here.
+	if manifest.SchemaVersion > CurrentSchemaVersion {
+		return manifest, fmt.Errorf("this project uses a newer wisp.json format. Please update your Wisp CLI.")
 	}
 
 	// If no addons are registered .Addons will come back as nil.
@@ -121,13 +135,13 @@ func deleteAddonFolder(folderName string) error {
 }
 
 // Fetches outdated addons from the addons.json file.
-func FetchOutdatedAddons(m *AddonManifest) ([]OutdatedAddon, error) {
+func FetchOutdatedAddons(ctx context.Context, m *AddonManifest) ([]OutdatedAddon, error) {
 	var outdated []OutdatedAddon = make([]OutdatedAddon, 0)
 
 	util.Info("Checking for updates...")
 
 	for folderName, addon := range m.Addons {
-		isUpToDate, ref, err := m.CheckAddon(addon.RepoInfo)
+		isUpToDate, ref, err := m.CheckAddon(ctx, addon.RepoInfo)
 		if err != nil {
 			util.Warn("Failed to check %s: %v", addon.RepoInfo.Repo, err)
 			continue

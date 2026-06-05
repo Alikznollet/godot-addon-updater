@@ -178,3 +178,22 @@ func NewItemBar(maxItems int, description string) *progressbar.ProgressBar {
 		}),
 	)
 }
+
+// Wisp themed indeterminate spinner for blocking tasks.
+func NewSpinner(description string) *progressbar.ProgressBar {
+	return progressbar.NewOptions(-1,
+		progressbar.OptionSetDescription(Cyan(description)),
+		progressbar.OptionSetWriter(os.Stderr),
+		progressbar.OptionSpinnerCustom([]string{
+			"·", "•", "●", "•", "·", " ", " ", " ",
+		}),
+		progressbar.OptionClearOnFinish(), // Erases the spinner when done
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "",
+			SaucerHead:    "",
+			SaucerPadding: "",
+			BarStart:      "",
+			BarEnd:        "",
+		}),
+	)
+}

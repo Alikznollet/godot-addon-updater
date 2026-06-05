@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,7 +19,7 @@ type SyncCmd struct {
 	RequiresManifestCmd
 }
 
-func (cmd *SyncCmd) Run() error {
+func (cmd *SyncCmd) Run(ctx context.Context) error {
 	folderNames, err := manifest.GetAddonFolderContents()
 	if err != nil {
 		return err
@@ -59,7 +60,7 @@ func (cmd *SyncCmd) Run() error {
 		}
 
 		// Delegates all ui to helpers
-		changed := cmd.handleUnknown(folderName)
+		changed := cmd.handleUnknown(ctx, folderName)
 		if changed {
 			manifestChanged = true
 		} else {
@@ -90,7 +91,7 @@ func (cmd *SyncCmd) Run() error {
 
 // Displays the menu for an unknown folder
 // Returns true if the manifest was modified.
-func (cmd *SyncCmd) handleUnknown(folderName string) bool {
+func (cmd *SyncCmd) handleUnknown(ctx context.Context, folderName string) bool {
 	util.Warn("Found unknown addon folder: %s", util.Cyan(folderName))
 
 	fmt.Println()
@@ -114,7 +115,7 @@ func (cmd *SyncCmd) handleUnknown(folderName string) bool {
 		util.Success("Marked '%s' as a local/untracked addon.", folderName)
 		return true
 	case "1":
-		return cmd.linkToRepo(folderName)
+		return cmd.linkToRepo(ctx, folderName)
 	default:
 		util.Warn("Invalid choice. Skipping...")
 		return false
@@ -123,7 +124,7 @@ func (cmd *SyncCmd) handleUnknown(folderName string) bool {
 
 // Displays the menu for linking to github and handles the fresh installation
 // Returns true if the manifest was modified.
-func (cmd *SyncCmd) linkToRepo(folderName string) bool {
+func (cmd *SyncCmd) linkToRepo(ctx context.Context, folderName string) bool {
 	repo := util.Prompt("", "Enter repository (e.g. https://github.com/ramokz/phantom-camera)")
 	repoInfo, err := git.ParseRepoString(repo)
 	if err != nil {
@@ -146,7 +147,7 @@ func (cmd *SyncCmd) linkToRepo(folderName string) bool {
 	}
 
 	// Fetch from GH
-	ref, err := git.GetAddonRef(repoInfo, target, isBranch)
+	ref, err := git.GetAddonRef(ctx, repoInfo, target, isBranch)
 	if err != nil {
 		util.Error("Could not verify with remote: %v", err)
 		return false
@@ -162,9 +163,9 @@ func (cmd *SyncCmd) linkToRepo(folderName string) bool {
 
 		var loc string
 		if isBranch {
-			loc, err = git.GitDownload(repoInfo.BuildRepoUrl(), target)
+			loc, err = git.GitDownload(ctx, repoInfo.BuildRepoUrl(), target)
 		} else {
-			loc, err = git.GitDownload(repoInfo.BuildRepoUrl(), ref.GetVersion())
+			loc, err = git.GitDownload(ctx, repoInfo.BuildRepoUrl(), ref.GetVersion())
 		}
 
 		if err != nil {

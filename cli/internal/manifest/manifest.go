@@ -8,6 +8,9 @@ import (
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
+// This dictates the shape of the JSON Wisp expects.
+const CurrentSchemaVersion = 1
+
 // Enum used as type of Addon.
 type AddonType string
 
@@ -55,7 +58,8 @@ func (a *Addon) GetCurrentBranch() string {
 // The complete list of addons mapping their repo names
 // to their respective Addon structs.
 type AddonManifest struct {
-	Addons map[string]Addon `json:"addons"`
+	SchemaVersion int              `json:"schema_version"`
+	Addons        map[string]Addon `json:"addons"`
 }
 
 // Adds an addon based on the branch of a repository.

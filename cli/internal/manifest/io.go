@@ -13,7 +13,7 @@ import (
 )
 
 // Name of the manifest file.
-const ManifestName = "addons.json"
+const ManifestName = "wisp.json"
 
 // Returns a list of all folder names inside of res://addons
 func GetAddonFolderContents() ([]string, error) {
@@ -51,7 +51,8 @@ func InitManifest(force bool) error {
 	}
 
 	m := AddonManifest{
-		Addons: make(map[string]Addon),
+		Addons:        make(map[string]Addon),
+		SchemaVersion: CurrentSchemaVersion, // Pin the current schema version.
 	}
 	return SaveManifest(&m)
 }
@@ -91,6 +92,12 @@ func LoadManifest() (*AddonManifest, error) {
 	err = json.Unmarshal(data, &manifest)
 	if err != nil {
 		return manifest, fmt.Errorf("failed to parse '%s': %w", ManifestName, err)
+	}
+
+	// Check for new version of the manifest.
+	// ! Any migrations from older to newer version can be prompted here.
+	if manifest.SchemaVersion > CurrentSchemaVersion {
+		return manifest, fmt.Errorf("this project uses a newer wisp.json format. Please update your Wisp CLI.")
 	}
 
 	// If no addons are registered .Addons will come back as nil.

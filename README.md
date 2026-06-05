@@ -1,7 +1,4 @@
-> [!WARNING]  
-> This repository is a WIP and should not be used until an official release.
-
-# Wisp
+# 🌀 Wisp
 Wisp is a lightweight, **completely optional** addon manager for Godot. It provides a streamlined way to install, update, and track your project's dependencies via Git, while maintaining the standard Godot workflow where addons live directly in your `res://addons/` folder.
 
 ### The Wisp Philosophy
@@ -13,7 +10,7 @@ Wisp is a **convenience tool**, not a requirement. In Godot, addons are typicall
 
 ---
 
-## Core Features
+## 🎯 Core Features
 - **Smart Extraction:** Uses `git sparse-checkout` to pull only the `addons/` folder from a repository, even if it's nested deep within a project.
 - **Auto-Injection:** Automatically enables plugins in your `project.godot` file upon installation, saving you a trip to the Project Settings.
 - **Bi-directional Sync:** The `sync` command ensures your `wisp.json` and physical disk state match—discovering manually added addons and pruning stale entries.
@@ -22,7 +19,7 @@ Wisp is a **convenience tool**, not a requirement. In Godot, addons are typicall
 
 ---
 
-# Installation
+## ⬇️ Installation
 
 ### 1. Install the CLI
 
@@ -55,7 +52,7 @@ This will create a `wisp.json` file. You will also be asked if you'd like to ins
 
 ---
 
-# CLI Documentation
+## 🔎 CLI Documentation
 
 ### `wisp install <repo>`
 Installs an addon and tracks it in `wisp.json`.
@@ -84,7 +81,7 @@ A read-only check for updates.
 
 ---
 
-# Studio & Internal Use
+## 🔒 Studio & Internal Use
 
 Wisp excels in professional studio environments where internal tools are shared across projects. Because Wisp uses your system's `git` binary, it seamlessly uses your existing SSH keys and credentials.
 
@@ -104,7 +101,7 @@ We recommend committing both `wisp.json` and your `res://addons/` folder to your
 
 ---
 
-# Editor Plugin
+## 🧩 Editor Plugin
 
 The Wisp Editor Plugin adds a "Sync" icon to the top-right toolbar in the Godot Editor for easy access to updates.
 
@@ -114,12 +111,12 @@ The Wisp Editor Plugin adds a "Sync" icon to the top-right toolbar in the Godot 
 
 ---
 
-# Roadmap
+## 🗺️ Roadmap
 - [ ] **Version/Commit Pinning:** Lock an addon to a specific Commit or Version for absolute stability.
 
 ---
 
-# Contributing
+## 🤝 Contributing
 
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
@@ -136,5 +133,5 @@ Contributions are what make the open-source community such an amazing place to l
 
 ---
 
-# License
+## ⚖️ License
 Distributed under the GNU GPL License. See `LICENSE` for more information.

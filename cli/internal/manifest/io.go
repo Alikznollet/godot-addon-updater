@@ -66,10 +66,16 @@ func SaveManifest(manifest *AddonManifest) error {
 		return fmt.Errorf("failed to encode JSON: %w", err)
 	}
 
-	// Write the manifest to the file.
-	err = os.WriteFile(ManifestName, jsonData, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to write '%s' to disk: %w", ManifestName, err)
+	// Write the manifest to a temp file.
+	tmpFile := fmt.Sprintf("%s.tmp", ManifestName)
+	if err = os.WriteFile(tmpFile, jsonData, 0644); err != nil {
+		return fmt.Errorf("failed to write temporary manifest: %v", err)
+	}
+
+	// Atomically swap it.
+	if err := os.Rename(tmpFile, ManifestName); err != nil {
+		os.Remove(tmpFile)
+		return fmt.Errorf("failed to update wisp.json: %v", err)
 	}
 
 	return nil

@@ -165,6 +165,8 @@ func GitDownload(ctx context.Context, repoUrl string, version string) (string, e
 
 	loc, err := util.CopyDir(sourceAddonsPath, destAddonsPath)
 	if err != nil {
+		// If something went wrong copying files to the addons folder we want to remove them all again.
+		os.RemoveAll(destAddonsPath)
 		return "", fmt.Errorf("failed to copy addons folder: %v", err)
 	}
 

@@ -1,4 +1,15 @@
 {
   "schema_version": 1,
-  "addons": {}
+  "addons": {
+    "wisp_updater": {
+      "repo_info": {
+        "domain": "github.com",
+        "owner": "alikznollet",
+        "repo": "godot-wisp",
+        "ssh": false
+      },
+      "type": "release",
+      "version": "v0.3.0"
+    }
+  }
 }

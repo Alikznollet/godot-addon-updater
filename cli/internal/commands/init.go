@@ -36,7 +36,7 @@ func (cmd *InitCmd) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	util.Success("Initialized '%s' for project %s", manifest.ManifestName, path)
+	util.Success("Initialized '%s' for project '%s'", manifest.ManifestName, path)
 
 	// Load the manifest.
 	m, err := manifest.LoadManifest()
@@ -45,7 +45,7 @@ func (cmd *InitCmd) Run(ctx context.Context) error {
 	}
 
 	util.Info("Wisp has a Godot editor plugin that lets you check for updates directly inside the engine!")
-	install := util.Confirm(false, "Would you like to install it now?")
+	install := util.Confirm(true, "Would you like to install it now?")
 
 	if install {
 		util.Info("Installing Wisp Godot Plugin...")

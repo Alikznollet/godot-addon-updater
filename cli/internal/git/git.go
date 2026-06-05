@@ -26,9 +26,10 @@ func GetLatestTag(ctx context.Context, repoUrl string) string {
 
 	// Grabs the top (so most recent tag) and split by /
 	tag := strings.Split(parts[1], "/")
+	cleanTag := strings.TrimSuffix(tag[2], "^{}")
 
 	// "ref/tags/version" and we want the actual tag so index 2
-	return tag[2]
+	return cleanTag
 }
 
 // Get the latest commit from a branch.

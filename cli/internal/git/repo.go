@@ -10,6 +10,7 @@ type RepoInfo struct {
 	Domain string `json:"domain"`
 	Owner  string `json:"owner"`
 	Repo   string `json:"repo"`
+	SSH    bool   `json:"ssh"`
 }
 
 // Will parse a repository string of either format "owner/repo" and default it to "github.com" as the domain
@@ -20,6 +21,10 @@ func ParseRepoString(repoString string) (RepoInfo, error) {
 	cleanString = strings.TrimPrefix(cleanString, "http://")
 	cleanString = strings.TrimSuffix(cleanString, "/")
 	cleanString = strings.TrimSuffix(cleanString, ".git")
+
+	// This means it's an SSH link.
+	cleanString, ssh := strings.CutPrefix(cleanString, "git@")
+	cleanString = strings.Replace(cleanString, ":", "/", 1)
 
 	// Split into parts
 	parts := strings.Split(cleanString, "/")
@@ -42,14 +47,20 @@ func ParseRepoString(repoString string) (RepoInfo, error) {
 
 	return RepoInfo{
 		Domain: domain,
-		Owner:  owner,
-		Repo:   repo,
+		Owner:  strings.ToLower(owner),
+		Repo:   strings.ToLower(repo),
+		SSH:    ssh,
 	}, nil
 }
 
 // Build an URL for the repo based on the info object.
 func (r *RepoInfo) BuildRepoUrl() string {
-	url := fmt.Sprintf("https://%s/%s/%s", r.Domain, r.Owner, r.Repo)
+	var url string
+	if r.SSH {
+		url = fmt.Sprintf("git@%s:%s/%s", r.Domain, r.Owner, r.Repo)
+	} else {
+		url = fmt.Sprintf("https://%s/%s/%s", r.Domain, r.Owner, r.Repo)
+	}
 	return url
 }
 

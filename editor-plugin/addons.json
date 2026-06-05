@@ -1,13 +1,3 @@
 {
-  "addons": {
-    "phantom_camera": {
-      "repo_info": {
-        "domain": "github.com",
-        "owner": "ramokz",
-        "repo": "phantom-camera"
-      },
-      "type": "release",
-      "version": "v0.11.0.2"
-    }
-  }
+  "addons": {}
 }

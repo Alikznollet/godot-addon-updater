@@ -110,7 +110,9 @@ func (m *AddonManifest) RemoveAddon(repoInfo git.RepoInfo, keep bool) error {
 // Looks for an addon by their repo name.
 func (m *AddonManifest) FindByRepo(repoInfo git.RepoInfo) (string, Addon, bool) {
 	for folderName, addon := range m.Addons {
-		if addon.RepoInfo == repoInfo {
+		// ! We check here for repo and owner equality. We'll assume that repos won't have clashing names AND
+		// ! owners across domains.
+		if addon.RepoInfo.Repo == repoInfo.Repo && addon.RepoInfo.Owner == repoInfo.Owner {
 			return folderName, addon, true
 		}
 	}

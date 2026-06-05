@@ -7,7 +7,8 @@ Wisp is a lightweight, **completely optional** addon manager for Godot. It provi
 ### The Wisp Philosophy
 Wisp is a **convenience tool**, not a requirement. In Godot, addons are typically committed directly to your version control. Wisp respects this:
 - **No Lock-in:** If you stop using Wisp, your project continues to work perfectly. Your addons remain in `res://addons/` just like any other folder.
-- **Convenience First:** Wisp automates the tedious parts—finding the right folder in a repo, handling sparse-checkouts, and manually enabling plugins in `project.godot`.
+- **Better than Submodules:** Most game developers find Git submodules cumbersome. Wisp acts as a "lite" replacement—using `git sparse-checkout` to pull only the files you need without the overhead of nested repository management.
+- **Convenience First:** Wisp automates the tedious parts—finding the right folder in a repo, handling checkouts, and manually enabling plugins in `project.godot`.
 - **Transparency:** All tracking happens in a human-readable `wisp.json` file.
 
 ---
@@ -17,7 +18,7 @@ Wisp is a **convenience tool**, not a requirement. In Godot, addons are typicall
 - **Auto-Injection:** Automatically enables plugins in your `project.godot` file upon installation, saving you a trip to the Project Settings.
 - **Bi-directional Sync:** The `sync` command ensures your `wisp.json` and physical disk state match—discovering manually added addons and pruning stale entries.
 - **Studio Ready:** Built for professional environments with native support for SSH, private repositories, and internal Git instances (GitLab, Gitea, etc.).
-- **In-Engine Notifications:** An optional Editor Plugin that alerts you to updates via a simple toolbar icon.
+- **Editor Integration:** A companion plugin that allows you to check for and apply updates without leaving the engine.
 
 ---
 
@@ -105,18 +106,16 @@ We recommend committing both `wisp.json` and your `res://addons/` folder to your
 
 # Editor Plugin
 
-The Wisp Editor Plugin adds a "Sync" icon to the top-right toolbar in the Godot Editor.
-- **Green Icon:** All addons are up to date.
-- **Spinning Icon:** Checking for updates or applying changes.
-- **Click to Update:** Opens a dialog showing available updates. You can select exactly which addons to update, and Wisp will handle the rest, including a filesystem rescan so Godot sees the changes immediately.
+The Wisp Editor Plugin adds a "Sync" icon to the top-right toolbar in the Godot Editor for easy access to updates.
+
+- **Check for Updates:** Clicking the icon initiates a check across all tracked addons using the Wisp CLI.
+- **Review & Apply:** A dialog will appear showing all available updates. You can select exactly which addons you want to update.
+- **Automatic Refresh:** Once the update is complete, Wisp automatically triggers a filesystem rescan so Godot reflects the new files immediately.
 
 ---
 
 # Roadmap
-- [ ] **Commit Pinning:** Lock an addon to a specific SHA for absolute stability.
-- [ ] **Dependency Resolution:** Automatically install requirements for complex addons.
-- [ ] **Custom Install Paths:** Support for repos that don't use a standard `addons/` structure.
-- [ ] **Headless Mode:** Improved flags for CI/CD environments.
+- [ ] **Version/Commit Pinning:** Lock an addon to a specific Commit or Version for absolute stability.
 
 ---
 

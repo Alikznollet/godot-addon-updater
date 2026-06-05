@@ -8,6 +8,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/alikznollet/godot-wisp/cli/internal/commands"
+	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
 
@@ -54,6 +55,11 @@ func main() {
 	ctx, err := parser.Parse(os.Args[1:])
 	if err != nil {
 		util.Fatal("Something went wrong: %v", err)
+	}
+
+	// Ensure git is ready before any command runs.
+	if err := git.VerifyGitRequirements(); err != nil {
+		util.Fatal("Git requirement failed: %v", err)
 	}
 
 	err = ctx.Run()

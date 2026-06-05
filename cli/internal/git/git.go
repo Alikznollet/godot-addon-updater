@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -168,4 +169,53 @@ func GitDownload(repoUrl string, version string) (string, error) {
 
 	util.Success("Successfully downloaded addon!")
 	return loc, nil
+}
+
+// Ensures git is installed and is at least 2.27
+func VerifyGitRequirements() error {
+	if _, err := exec.LookPath("git"); err != nil {
+		return fmt.Errorf("git is not installed or not in system PATH")
+	}
+
+	// Check the git version
+	cmd := exec.Command("git", "--version")
+	out, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("could not execute git --version: %v", err)
+	}
+
+	// Trim the output
+	versionStr := strings.TrimSpace(string(out))
+	parts := strings.Fields(versionStr)
+
+	if len(parts) < 3 {
+		return fmt.Errorf("unrecognized git version output: %s", versionStr)
+	}
+
+	// Extract the version numbers
+	rawVersion := parts[2]
+	versionParts := strings.Split(rawVersion, ".")
+
+	if len(versionParts) < 2 {
+		return fmt.Errorf("could not parse major/minor version from: %s", rawVersion)
+	}
+
+	// Parse Major and Minor
+	major, err := strconv.Atoi(versionParts[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse major version: %v", err)
+	}
+
+	minor, err := strconv.Atoi(versionParts[1])
+	if err != nil {
+		return fmt.Errorf("failed to parse minor version: %v", err)
+	}
+
+	// Check the version against req
+	// ! Change version req here if anything ever changes.
+	if major < 2 || (major == 2 && minor < 27) {
+		return fmt.Errorf("Wisp requires Git v2.27 or newer for sparse-checkout features. You are using v%d.%d", major, minor)
+	}
+
+	return nil
 }

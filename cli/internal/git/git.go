@@ -1,6 +1,7 @@
 package git
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,8 +14,8 @@ import (
 )
 
 // Get the latest tag from whatever url to version control is provided using git.
-func GetLatestTag(repoUrl string) string {
-	cmd := exec.Command("git", "ls-remote", "--tags", "--sort=-v:refname", repoUrl)
+func GetLatestTag(ctx context.Context, repoUrl string) string {
+	cmd := exec.CommandContext(ctx, "git", "ls-remote", "--tags", "--sort=-v:refname", repoUrl)
 	output, err := cmd.Output()
 	if err != nil {
 		return ""
@@ -31,8 +32,8 @@ func GetLatestTag(repoUrl string) string {
 }
 
 // Get the latest commit from a branch.
-func GetLatestCommitForBranch(repoUrl string, branch string) string {
-	cmd := exec.Command("git", "ls-remote", repoUrl, branch)
+func GetLatestCommitForBranch(ctx context.Context, repoUrl string, branch string) string {
+	cmd := exec.CommandContext(ctx, "git", "ls-remote", repoUrl, branch)
 
 	// Get the output from the command.
 	outputBytes, err := cmd.Output()
@@ -57,7 +58,7 @@ func GetLatestCommitForBranch(repoUrl string, branch string) string {
 	return ""
 }
 
-func GitDownload(repoUrl string, version string) (string, error) {
+func GitDownload(ctx context.Context, repoUrl string, version string) (string, error) {
 	tempDir, err := os.MkdirTemp("", "wisp-clone-*")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp dir: %v", err)
@@ -67,7 +68,7 @@ func GitDownload(repoUrl string, version string) (string, error) {
 	util.Info("Cloning '%s' into temp folder...", repoUrl)
 
 	// Clone the repo efficiently without downloading everything.
-	cloneCmd := exec.Command("git", "clone",
+	cloneCmd := exec.CommandContext(ctx, "git", "clone",
 		"--depth", "1",
 		"--filter=blob:none",
 		"--sparse",
@@ -103,7 +104,7 @@ func GitDownload(repoUrl string, version string) (string, error) {
 	}
 
 	// We have to look for the specific addons folder first.
-	lsCmd := exec.Command("git", "ls-tree", "-r", "--name-only", "HEAD")
+	lsCmd := exec.CommandContext(ctx, "git", "ls-tree", "-r", "--name-only", "HEAD")
 	lsCmd.Dir = tempDir
 
 	output, err := lsCmd.Output()
@@ -149,7 +150,7 @@ func GitDownload(repoUrl string, version string) (string, error) {
 	util.Info("Found 'addons' folder.")
 
 	// We can then call sparse-checkout to only get the addons folder.
-	sparseCmd := exec.Command("git", "sparse-checkout", "set", targetAddonsPath)
+	sparseCmd := exec.CommandContext(ctx, "git", "sparse-checkout", "set", targetAddonsPath)
 	sparseCmd.Dir = tempDir
 
 	if err := sparseCmd.Run(); err != nil {
@@ -172,13 +173,13 @@ func GitDownload(repoUrl string, version string) (string, error) {
 }
 
 // Ensures git is installed and is at least 2.27
-func VerifyGitRequirements() error {
+func VerifyGitRequirements(ctx context.Context) error {
 	if _, err := exec.LookPath("git"); err != nil {
 		return fmt.Errorf("git is not installed or not in system PATH")
 	}
 
 	// Check the git version
-	cmd := exec.Command("git", "--version")
+	cmd := exec.CommandContext(ctx, "git", "--version")
 	out, err := cmd.Output()
 	if err != nil {
 		return fmt.Errorf("could not execute git --version: %v", err)

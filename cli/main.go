@@ -4,7 +4,10 @@
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/alecthomas/kong"
 	"github.com/alikznollet/godot-wisp/cli/internal/commands"
@@ -31,6 +34,9 @@ var cli struct {
 }
 
 func main() {
+	appCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop() // Ensures resources are freed
+
 	// If only the cli passed we open help.
 	if len(os.Args) == 1 {
 		os.Args = append(os.Args, "-h")
@@ -45,6 +51,7 @@ func main() {
 		kong.Vars{
 			"version": version,
 		},
+		kong.BindTo(appCtx, (*context.Context)(nil)),
 	)
 	if err != nil {
 		// If it hits this something is fucked...
@@ -58,13 +65,17 @@ func main() {
 	}
 
 	// Ensure git is ready before any command runs.
-	if err := git.VerifyGitRequirements(); err != nil {
+	if err := git.VerifyGitRequirements(appCtx); err != nil {
 		util.Fatal("Git requirement failed: %v", err)
 	}
 
 	err = ctx.Run()
 
 	if err != nil {
-		util.Fatal("A problem occurred: %v", err)
+		if appCtx.Err() == context.Canceled {
+			util.Fatal("Installation cancelled by user.")
+		} else {
+			util.Fatal("A problem occurred: %v", err)
+		}
 	}
 }

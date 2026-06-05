@@ -3,6 +3,7 @@ package manifest
 // Defines the IO functionality for addons.json.
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -128,13 +129,13 @@ func deleteAddonFolder(folderName string) error {
 }
 
 // Fetches outdated addons from the addons.json file.
-func FetchOutdatedAddons(m *AddonManifest) ([]OutdatedAddon, error) {
+func FetchOutdatedAddons(ctx context.Context, m *AddonManifest) ([]OutdatedAddon, error) {
 	var outdated []OutdatedAddon = make([]OutdatedAddon, 0)
 
 	util.Info("Checking for updates...")
 
 	for folderName, addon := range m.Addons {
-		isUpToDate, ref, err := m.CheckAddon(addon.RepoInfo)
+		isUpToDate, ref, err := m.CheckAddon(ctx, addon.RepoInfo)
 		if err != nil {
 			util.Warn("Failed to check %s: %v", addon.RepoInfo.Repo, err)
 			continue

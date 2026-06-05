@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"context"
+
 	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
@@ -16,7 +18,7 @@ type UpdateCmd struct {
 	Yes   bool     `short:"y" help:"Automatically confirm each update without user interaction."`
 }
 
-func (cmd *UpdateCmd) Run() error {
+func (cmd *UpdateCmd) Run(ctx context.Context) error {
 	// Filter target repos
 	var targets []manifest.Addon
 
@@ -51,7 +53,7 @@ func (cmd *UpdateCmd) Run() error {
 
 	// Check and update repos that need it.
 	for _, addon := range targets {
-		isUpToDate, ref, err := cmd.Manifest.CheckAddon(addon.RepoInfo)
+		isUpToDate, ref, err := cmd.Manifest.CheckAddon(ctx, addon.RepoInfo)
 		if err != nil {
 			util.Warn("Failed to check %s: %v", addon.RepoInfo.Repo, err)
 			continue
@@ -74,7 +76,7 @@ func (cmd *UpdateCmd) Run() error {
 
 		// Download and apply.
 		util.Info("Applying update...")
-		loc, err := git.GitDownload(addon.RepoInfo.BuildRepoUrl(), ref.GetVersion())
+		loc, err := git.GitDownload(ctx, addon.RepoInfo.BuildRepoUrl(), ref.GetVersion())
 		if err != nil {
 			util.Error("Failed to download %s: %v", addon.RepoInfo.Repo, err)
 			continue

@@ -51,7 +51,7 @@ func (cmd *CheckCmd) Run() error {
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
 	for _, o := range outdated {
-		util.PrintListItem(w, o.Repo, "Update", fmt.Sprintf("%s -> %s", o.Current, o.Latest))
+		util.PrintListItem(w, o.RepoInfo.BuildRepoRef(), "Update", fmt.Sprintf("%s -> %s", o.Current, o.Latest))
 	}
 	w.Flush()
 

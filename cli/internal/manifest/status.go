@@ -1,5 +1,7 @@
 package manifest
 
+import "fmt"
+
 // Holds clean formatted data for the CLI
 type AddonStatus struct {
 	Name    string
@@ -38,8 +40,8 @@ func (m *AddonManifest) CompareWithDisk() ([]AddonStatus, error) {
 		}
 
 		// If it's tracked, prefer showing the Repo name instead of just the folder
-		if exists && addon.Repo != "" {
-			status.Name = addon.Repo
+		if exists && addon.RepoInfo.Repo != "" {
+			status.Name = fmt.Sprintf("%s (%s)", addon.RepoInfo.BuildRepoRef(), addon.RepoInfo.Domain)
 		}
 
 		statuses = append(statuses, status)

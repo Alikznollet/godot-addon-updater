@@ -127,22 +127,22 @@ func FetchOutdatedAddons(m *AddonManifest) ([]OutdatedAddon, error) {
 	util.Info("Checking for updates...")
 
 	for folderName, addon := range m.Addons {
-		isUpToDate, ref, err := m.CheckAddon(addon.Repo)
+		isUpToDate, ref, err := m.CheckAddon(addon.RepoInfo)
 		if err != nil {
-			util.Warn("Failed to check %s: %v", addon.Repo, err)
+			util.Warn("Failed to check %s: %v", addon.RepoInfo.Repo, err)
 			continue
 		}
 
 		if !isUpToDate && ref != nil {
-			util.Info("Update found for %s (%s -> %s)", addon.Repo, addon.GetCurrentVersion(), ref.GetVersion())
+			util.Info("Update found for %s (%s -> %s)", addon.RepoInfo.Repo, addon.GetCurrentVersion(), ref.GetVersion())
 
 			outdated = append(outdated, OutdatedAddon{
-				Folder:  folderName,
-				Repo:    addon.Repo,
-				Current: addon.GetCurrentVersion(),
-				Latest:  ref.GetVersion(),
-				Type:    addon.Type,
-				Branch:  addon.GetCurrentBranch(),
+				Folder:   folderName,
+				RepoInfo: addon.RepoInfo,
+				Current:  addon.GetCurrentVersion(),
+				Latest:   ref.GetVersion(),
+				Type:     addon.Type,
+				Branch:   addon.GetCurrentBranch(),
 			})
 		}
 	}

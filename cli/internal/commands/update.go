@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/alikznollet/godot-wisp/cli/internal/github"
+	"github.com/alikznollet/godot-wisp/cli/internal/git"
 	"github.com/alikznollet/godot-wisp/cli/internal/manifest"
 	"github.com/alikznollet/godot-wisp/cli/internal/util"
 )
@@ -28,7 +28,11 @@ func (cmd *UpdateCmd) Run() error {
 		}
 	} else {
 		for _, repoName := range cmd.Repos {
-			_, addon, isTracked := cmd.Manifest.FindByRepo(repoName)
+			repoInfo, err := git.ParseRepoString(repoName)
+			if err != nil {
+				return err
+			}
+			_, addon, isTracked := cmd.Manifest.FindByRepo(repoInfo)
 			if !isTracked {
 				util.Warn("Addon '%s' is not tracked by Wisp, skipping...", repoName)
 				continue
@@ -47,40 +51,40 @@ func (cmd *UpdateCmd) Run() error {
 
 	// Check and update repos that need it.
 	for _, addon := range targets {
-		isUpToDate, ref, err := cmd.Manifest.CheckAddon(addon.Repo)
+		isUpToDate, ref, err := cmd.Manifest.CheckAddon(addon.RepoInfo)
 		if err != nil {
-			util.Warn("Failed to check %s: %v", addon.Repo, err)
+			util.Warn("Failed to check %s: %v", addon.RepoInfo.Repo, err)
 			continue
 		}
 
 		if isUpToDate || ref == nil {
-			util.Success("%s is up to date.", addon.Repo)
+			util.Success("%s is up to date.", addon.RepoInfo.Repo)
 			continue
 		}
 
-		util.Info("Update found for %s (%s -> %s)", addon.Repo, addon.GetCurrentVersion(), ref.GetVersion())
+		util.Info("Update found for %s (%s -> %s)", addon.RepoInfo.Repo, addon.GetCurrentVersion(), ref.GetVersion())
 
 		// User confirmation
 		if !cmd.Yes {
 			if !util.Confirm(true, "Do you want to download and apply this update?") {
-				util.Info("Skipping %s...", addon.Repo)
+				util.Info("Skipping %s...", addon.RepoInfo.Repo)
 				continue
 			}
 		}
 
 		// Download and apply.
 		util.Info("Applying update...")
-		loc, err := github.DownloadAndExtract(ref.GetZipballUrl())
+		loc, err := git.GitDownload(addon.RepoInfo.BuildRepoUrl(), ref.GetVersion())
 		if err != nil {
-			util.Error("Failed to download %s: %v", addon.Repo, err)
+			util.Error("Failed to download %s: %v", addon.RepoInfo.Repo, err)
 			continue
 		}
 
 		// Call the correct addition function.
 		if addon.Type == manifest.Release {
-			cmd.Manifest.AddRelease(loc, addon.Repo, ref.GetVersion())
+			cmd.Manifest.AddRelease(loc, addon.RepoInfo, ref.GetVersion())
 		} else {
-			cmd.Manifest.AddBranch(loc, addon.Repo, addon.GetCurrentBranch(), ref.GetVersion())
+			cmd.Manifest.AddBranch(loc, addon.RepoInfo, addon.GetCurrentBranch(), ref.GetVersion())
 		}
 
 		updatedCount++

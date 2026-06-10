@@ -168,11 +168,24 @@ func _on_wisp_check_finished(exit_code: int, output: Array) -> void:
 		for addon in outdated_addons:
 			var cb := CheckBox.new()
 
-			cb.text = "%s (%s -> %s)" % [addon["repo"], addon["current_version"], addon["latest_version"]]
+			cb.text = "%s/%s (%s -> %s)" % [addon["repo_info"]["owner"], addon["repo_info"]["repo"], addon["current_version"], addon["latest_version"]]
 			cb.button_pressed = true
 
 			vbox.add_child(cb)
-			update_checkboxes[addon["repo"]] = cb
+
+			# As key we will build the whole URL
+			var ssh: bool = addon["repo_info"]["ssh"]
+			var domain: String = addon["repo_info"]["domain"]
+			var owner: String = addon["repo_info"]["owner"]
+			var repo: String = addon["repo_info"]["repo"]
+
+			var url: String
+			if ssh:
+				url = "git@%s:%s/%s" % [domain, owner, repo]
+			else:
+				url = "https://%s/%s/%s" % [domain, owner, repo]
+
+			update_checkboxes[url] = cb
 
 	# Show the popup in the middle of the screen
 	dialog.popup_centered(Vector2(350, 150))

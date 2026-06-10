@@ -1,25 +1,16 @@
 {
   "schema_version": 1,
   "addons": {
-    "spectre-logger": {
-      "repo_info": {
-        "domain": "github.com",
-        "owner": "alikznollet",
-        "repo": "godot-spectre",
-        "ssh": false
-      },
-      "type": "release",
-      "version": "v1.0.1"
-    },
     "wisp_updater": {
       "repo_info": {
-        "domain": "github.com",
-        "owner": "alikznollet",
-        "repo": "godot-wisp",
+        "domain": "",
+        "owner": "",
+        "repo": "",
         "ssh": false
       },
-      "type": "release",
-      "version": "v0.3.0"
+      "type": "",
+      "version": "",
+      "untracked": true
     }
   }
 }
